@@ -5,9 +5,15 @@ local Node = require("callgraph.tree.node")
 ---@field name string
 ---@field location lsp.URI
 
+---@class callgraph.Opts
+---@field dir "in" | "out"
+---@field depth_limit_in integer
+---@field depth_limit_out integer
+---@field filter_location string? location = "file:///usr/include/c%2B%2B/15.1.1/bits/stl_iterator.h",
+
 ---@class callgraph.Request.Ctx
 ---@field root Node<callgraph.Entry>?
----@field dir "in" | "out"
+---@field opts callgraph.Opts
 
 ---@class callgraph.Request
 ---@field params lsp.TextDocumentPositionParams?
@@ -82,10 +88,23 @@ function M.handler_incomingCalls(response, ctx)
             location = call.from.uri,
         }, ctx.root)
 
+        if node.depth == ctx.opts.depth_limit_in then
+            vim.notify("Reached depth limit for incoming calls: " .. ctx.opts.depth_limit_in, vim.log.levels.WARN)
+            return
+        end
+
+        if node.data.location:find(ctx.opts.filter_location or "", 1, true) then
+            vim.notify("Filtered out call to " .. node.data.location, vim.log.levels.DEBUG)
+            return
+        end
+
         ---@type callgraph.Request
-        local request = { item = call.from, ctx = { dir = ctx.dir, node } }
+        local request = { item = call.from, ctx = { root = node, opts = ctx.opts } }
         M.request_incomingCalls(client, request)
     end
+
+    vim.print(ctx.root)
+end
 end
 
 ---@type callgraph.Requester
@@ -111,13 +130,22 @@ local function handler_prepareCallHierarchy(response, ctx)
     ---@cast result lsp.CallHierarchyItem[]
 
     --- Extract items from results and put into the tree
-    ctx.root.data = {
-        kind = result[1].kind, name = result[1].name, location = result[1].uri,
+    local node = Node.new {
+        kind = result[1].kind,
+        name = result[1].name,
+        location = result[1].uri,
     }
 
     ---@type callgraph.Request
-    local request = { item = result[1], ctx = ctx }
-    M.request_incomingCalls(client, request)
+    local request = { item = result[1], ctx = { root = node, opts = ctx.opts } }
+    if ctx.opts.dir == "in" then
+        M.request_incomingCalls(client, request)
+    elseif ctx.opts.dir == "out" then
+        M.request_outgoingCalls(client, request)
+    else
+        vim.notify("Invalid direction: " .. ctx.opts.dir, vim.log.levels.ERROR)
+        return
+    end
 end
 
 ---@type callgraph.Requester
@@ -144,15 +172,17 @@ return {
             return nil
         end
 
-        ---@type Node<callgraph.Entry>
-        local root = Node.new({})
-
         ---@type callgraph.Request
         local request = {
             params = vim.lsp.util.make_position_params(0, client.offset_encoding),
             ctx = {
-                dir = "in",
-                root = root,
+                root = nil,
+                opts = {
+                    dir = "in",
+                    depth_limit_in = 10,
+                    depth_limit_out = 5,
+                    filter_location = "/usr/include/c",
+                }
             }
         }
 
