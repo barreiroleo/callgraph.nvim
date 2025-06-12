@@ -50,8 +50,24 @@ end
 ---@param response callgraph.Response.Lsp
 ---@return vim.lsp.Client? client, table? result
 local function process_response(response)
-    if response.err or not response.result then
-        vim.notify("Bad repsonse", vim.log.levels.ERROR)
+    if not response then
+        vim.notify("Bad response", vim.log.levels.ERROR)
+        return nil, nil
+    end
+
+    if response.err then
+        local err_msg = response.err.message or "Unknown LSP error"
+        vim.notify("LSP error: " .. err_msg, vim.log.levels.ERROR)
+        return nil, nil
+    end
+
+    if not response.result then
+        vim.notify("No result in response", vim.log.levels.ERROR)
+        return nil, nil
+    end
+
+    if not response.context or not response.context.client_id then
+        vim.notify("Invalid response context", vim.log.levels.ERROR)
         return nil, nil
     end
 
@@ -91,20 +107,22 @@ function M.handler_outgoingCalls(response, ctx)
         ---@type callgraph.Request
         local request = { item = call.to, ctx = { root = node, opts = ctx.opts } }
 
-        if node.depth == ctx.opts.depth_limit_out then
+        if node._depth >= ctx.opts.depth_limit_out then
             vim.notify("Reached depth limit for outgoing calls: " .. ctx.opts.depth_limit_out, vim.log.levels.WARN)
-            return
+            goto continue
         end
 
         if node.data.location:find(ctx.opts.filter_location or "", 1, true) then
             vim.notify("Filtered out call to " .. node.data.location, vim.log.levels.DEBUG)
-            return
+            goto continue
         end
 
         M.request_outgoingCalls(client, request)
+
+        ::continue::
     end
 
-    vim.print(ctx.root)
+    vim.print(ctx.root:dump_subtree())
 end
 
 ---@type callgraph.Handler
@@ -124,22 +142,24 @@ function M.handler_incomingCalls(response, ctx)
             location = call.from.uri,
         }, ctx.root)
 
-        if node.depth == ctx.opts.depth_limit_in then
+        if node._depth >= ctx.opts.depth_limit_in then
             vim.notify("Reached depth limit for incoming calls: " .. ctx.opts.depth_limit_in, vim.log.levels.WARN)
-            return
+            goto continue
         end
 
         if node.data.location:find(ctx.opts.filter_location or "", 1, true) then
             vim.notify("Filtered out call to " .. node.data.location, vim.log.levels.DEBUG)
-            return
+            goto continue
         end
 
         ---@type callgraph.Request
         local request = { item = call.from, ctx = { root = node, opts = ctx.opts } }
         M.request_incomingCalls(client, request)
+
+        ::continue::
     end
 
-    vim.print(ctx.root)
+    vim.print(ctx.root:dump_subtree())
 end
 
 ---@type callgraph.Requester
@@ -171,7 +191,7 @@ end
 ---@type callgraph.Handler
 local function handler_prepareCallHierarchy(response, ctx)
     local client, result = process_response(response)
-    if not client or not result then
+    if not client or not result or #result == 0 then
         vim.notify("Could not process call hierarchy response", vim.log.levels.ERROR)
         return
     end
@@ -226,13 +246,14 @@ return {
             ctx = {
                 root = nil,
                 opts = {
-                    dir = "in",
+                    dir = "out",
                     depth_limit_in = 10,
-                    depth_limit_out = 5,
+                    depth_limit_out = 6,
                     filter_location = "/usr/include/c",
                 }
             }
         }
+        vim.print(request.ctx)
 
         request_prepareCallHierarchy(client, request)
     end
