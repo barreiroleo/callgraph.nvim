@@ -10,7 +10,7 @@ local function get_client()
         return nil
     end
 
-    vim.notify("Found client " .. client.name, vim.log.levels.TRACE)
+    -- vim.notify("Found client " .. client.name, vim.log.levels.TRACE)
     return client
 end
 
@@ -76,7 +76,7 @@ local M = {}
 
 ---@param opts callgraph.Opts.Run
 function M.run(opts)
-    vim.notify("Running analysis with opts" .. vim.inspect(opts), vim.log.levels.INFO)
+    vim.notify("Running callgraph analysis: " .. vim.inspect(opts), vim.log.levels.INFO)
 
     local client = get_client()
     if not client then

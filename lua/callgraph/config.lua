@@ -4,7 +4,7 @@
 local function filter_location(uri, filters)
     for _, filter in ipairs(filters) do
         if uri:find(filter or "", 1, true) then
-            vim.notify("Filtered out call to " .. uri, vim.log.levels.TRACE)
+            -- vim.notify("Filtered out call to " .. uri, vim.log.levels.TRACE)
             return true
         end
     end
@@ -16,10 +16,10 @@ end
 ---@return function filter_function
 local function create_filter_function(filter_input)
     if type(filter_input) == "function" then
-        vim.notify("Using provided filter function", vim.log.levels.TRACE)
+        -- vim.notify("Using provided filter function", vim.log.levels.TRACE)
         return filter_input
     elseif type(filter_input) == "table" then
-        vim.notify("Using filter strings", vim.log.levels.TRACE)
+        -- vim.notify("Using provided filter strings", vim.log.levels.TRACE)
         return function(uri) return filter_location(uri, filter_input) end
     else
         error("filter_location must be either a function or an array of strings")

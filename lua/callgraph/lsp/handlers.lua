@@ -21,7 +21,7 @@ local function should_exclude_child(ctx, uri)
     end
 
     if ctx.opts.filter_location(uri) then
-        vim.notify("Filtered out call to " .. uri, vim.log.levels.TRACE)
+        -- vim.notify("Filtered out call to " .. uri, vim.log.levels.TRACE)
         return true
     end
 
@@ -122,7 +122,7 @@ function M.handler_prepareCallHierarchy(response, ctx, cb)
 
     listener:set_on_finish(function()
         vim.notify("Callgraph finished", vim.log.levels.INFO)
-        vim.print(node:dump_subtree())
+        -- vim.print(node:dump_subtree())
         require("callgraph.graph.exporter").export(node)
     end)
 end

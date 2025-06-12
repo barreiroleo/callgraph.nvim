@@ -24,13 +24,13 @@ end
 ---@param id number
 function Listener:new_request(id)
     table.insert(self.pending_requests, id)
-    vim.notify("New request: #" .. #self.pending_requests, vim.log.levels.TRACE)
+    -- vim.notify("New request: #" .. #self.pending_requests, vim.log.levels.TRACE)
     self.is_processing = true
 end
 
 function Listener:finish_request()
     self.completed_requests = self.completed_requests + 1
-    vim.notify("Request completed: #" .. self.completed_requests, vim.log.levels.TRACE)
+    -- vim.notify("Request completed: #" .. self.completed_requests, vim.log.levels.TRACE)
 
     if #self.pending_requests == self.completed_requests then
         self.is_processing = false
