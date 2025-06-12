@@ -2,7 +2,7 @@ local M = {}
 
 ---@param response callgraph.Response.Lsp
 ---@return vim.lsp.Client? client, table? result
-function M.process_response(response)
+function M.process_response_errors(response)
     if not response then
         vim.notify("Bad response", vim.log.levels.ERROR)
         return nil, nil

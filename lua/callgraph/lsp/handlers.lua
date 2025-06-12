@@ -1,5 +1,14 @@
 local Node = require("callgraph.tree.node")
-local process_response = require("callgraph.lsp.errors").process_response
+local process_response_errors = require("callgraph.lsp.errors").process_response_errors
+
+local listener = require("callgraph.lsp.listener")
+
+local function process_response(response)
+    vim.defer_fn(function()
+        listener:finish_request()
+    end, 0)
+    return process_response_errors(response)
+end
 
 local M = {}
 
@@ -37,8 +46,6 @@ function M.handler_outgoingCalls(response, ctx, cb)
 
         ::continue::
     end
-
-    vim.print(ctx.root:dump_subtree())
 end
 
 ---@type callgraph.Handler
@@ -75,8 +82,6 @@ function M.handler_incomingCalls(response, ctx, cb)
 
         ::continue::
     end
-
-    vim.print(ctx.root:dump_subtree())
 end
 
 ---@type callgraph.Handler
@@ -89,16 +94,21 @@ function M.handler_prepareCallHierarchy(response, ctx, cb)
     ---@cast result lsp.CallHierarchyItem[]
 
     --- Extract items from results and put into the tree
-    local node = Node.new {
+    local node = Node.new({
         kind = result[1].kind,
         name = result[1].name,
         location = result[1].uri,
-    }
+    })
 
     ---Request outgoing or incoming calls based on the direction
     ---@type callgraph.Request
     local request = { item = result[1], ctx = { root = node, opts = ctx.opts } }
     cb(client, request)
+
+    listener:set_on_finish(function()
+        vim.notify("Callgraph finished", vim.log.levels.INFO)
+        vim.print(node:dump_subtree())
+    end)
 end
 
 return M

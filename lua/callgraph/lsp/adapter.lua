@@ -1,4 +1,5 @@
 local handlers = require("callgraph.lsp.handlers")
+local listener = require("callgraph.lsp.listener")
 
 ---@return vim.lsp.Client?
 local function get_client()
@@ -23,11 +24,12 @@ local function request_outgoingCalls(client, request)
             handlers.handler_outgoingCalls(response, request.ctx, request_outgoingCalls)
         end)
 
-    if not success then
+    if not success or not req_id then
         vim.notify("Failed to request outgoing calls", vim.log.levels.ERROR)
         return nil
     end
 
+    listener:new_request(req_id)
     return req_id
 end
 
@@ -41,11 +43,12 @@ local function request_incomingCalls(client, request)
             handlers.handler_incomingCalls(response, request.ctx, request_incomingCalls)
         end)
 
-    if not success then
+    if not success or not req_id then
         vim.notify("Failed to request incoming calls", vim.log.levels.ERROR)
         return nil
     end
 
+    listener:new_request(req_id)
     return req_id
 end
 
@@ -60,11 +63,12 @@ local function request_prepareCallHierarchy(client, request)
             handlers.handler_prepareCallHierarchy(response, request.ctx, cb)
         end)
 
-    if not success then
+    if not success or not req_id then
         vim.notify("Failed to request call hierarchy", vim.log.levels.ERROR)
         return nil
     end
 
+    listener:new_request(req_id)
     return req_id
 end
 
@@ -72,6 +76,9 @@ local M = {}
 
 ---@param opts callgraph.Opts?
 function M.run(opts)
+    opts = require("callgraph.config").merge_opts(opts)
+    vim.notify("Running analysis with opts" .. vim.inspect(opts), vim.log.levels.INFO)
+
     local client = get_client()
     if not client then
         vim.notify("Failed to find recursive calls", vim.log.levels.ERROR)
@@ -83,10 +90,9 @@ function M.run(opts)
         params = vim.lsp.util.make_position_params(0, client.offset_encoding),
         ctx = {
             root = nil,
-            opts = require("callgraph").config.merge_opts(opts),
+            opts = opts,
         }
     }
-
     request_prepareCallHierarchy(client, request)
 end
 
