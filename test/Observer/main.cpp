@@ -23,15 +23,8 @@ void run_test_b()
     service.process();
 }
 
-void run_recursive()
-{
-    if (false)
-        run_recursive();
-}
-
 int main()
 {
     run_test_a();
     run_test_b();
-    run_recursive();
 }

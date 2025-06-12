@@ -22,6 +22,7 @@ public:
     void run_service_b()
     {
         Common::do_something_common_nested(1, 2);
+        Common::do_something_comon_recursive(3, 4);
     }
 };
 }

@@ -1,4 +1,7 @@
 ---@module "callgraph.tree.node"
+---@module "callgraph.lsp._meta"
+
+local config = require("callgraph.config")
 
 ---@class DotExporter
 ---@field private _node_counter integer
@@ -17,10 +20,11 @@ function DotExporter.new()
 end
 
 ---Generate a unique node ID for DOT format
----@param node_data table
+---@param node Node<callgraph.Entry>
 ---@return string
-function DotExporter:_generate_node_id(node_data)
-    local key = string.format("%s_%s_%s", node_data.name or "unknown", node_data.kind or 0, node_data.location or "")
+function DotExporter:_generate_node_id(node)
+    local data = node.data
+    local key = string.format("%s_%s_%s", data.name or "unknown", data.kind or 0, data.location or "")
 
     if not self._node_ids[key] then
         self._node_counter = self._node_counter + 1
@@ -41,16 +45,16 @@ function DotExporter:_escape_string(str)
 end
 
 ---Get node label for display
----@param node_data table
+---@param node Node<callgraph.Entry>
 ---@return string
-function DotExporter:_get_node_label(node_data)
-    local name = node_data.name or "unknown"
-    local kind = node_data.kind or 0
+function DotExporter:_get_node_label(node)
+    local data = node.data
+    local name = data.name or "unknown"
 
     -- Extract filename from location for cleaner display
     local file = ""
-    if node_data.location then
-        file = node_data.location:match("([^/]+)$") or node_data.location
+    if data.location then
+        file = data.location:match("([^/]+)$") or data.location
         file = file:gsub("%%2B%%2B", "++") -- Decode URL encoding for C++
     end
 
@@ -62,11 +66,11 @@ function DotExporter:_get_node_label(node_data)
 end
 
 ---Get node style based on kind and recursive status
----@param node_data table
+---@param node Node<callgraph.Entry>
 ---@param is_recursive boolean
 ---@return string
-function DotExporter:_get_node_style(node_data, is_recursive)
-    local kind = node_data.kind or 0
+function DotExporter:_get_node_style(node, is_recursive)
+    local kind = node.data.kind or 0
     local style = ""
 
     -- Different colors/shapes for different symbol kinds
@@ -87,24 +91,24 @@ function DotExporter:_get_node_style(node_data, is_recursive)
 end
 
 ---Extract file location from node data
----@param node_data table
+---@param node Node<callgraph.Entry>
 ---@return string
-function DotExporter:_get_file_location(node_data)
-    if not node_data.location then
+function DotExporter:_get_file_location(node)
+    if not node.data.location then
         return "unknown"
     end
 
-    local file = node_data.location:match("([^/]+)$") or node_data.location
+    local file = node.data.location:match("([^/]+)$") or node.data.location
     file = file:gsub("%%2B%%2B", "++") -- Decode URL encoding for C++
     return file
 end
 
 ---Collect all nodes and group them by file location
----@param node table Node data structure
+---@param node Node Node data structure
 ---@param file_groups table<string, table[]> Table to store nodes grouped by file
 ---@param visited table<string, boolean> Track visited nodes to prevent infinite recursion
 function DotExporter:_collect_nodes_by_file(node, file_groups, visited)
-    local node_id = self:_generate_node_id(node.data)
+    local node_id = self:_generate_node_id(node)
 
     -- Prevent infinite recursion
     if visited[node_id] then
@@ -113,7 +117,7 @@ function DotExporter:_collect_nodes_by_file(node, file_groups, visited)
     visited[node_id] = true
 
     -- Group node by file location
-    local file_location = self:_get_file_location(node.data)
+    local file_location = self:_get_file_location(node)
     if not file_groups[file_location] then
         file_groups[file_location] = {}
     end
@@ -123,7 +127,7 @@ function DotExporter:_collect_nodes_by_file(node, file_groups, visited)
     })
 
     -- Process children
-    if node.children and not node.is_recursive then
+    if node.children and not node:is_recursive() then
         for _, child in ipairs(node.children) do
             self:_collect_nodes_by_file(child, file_groups, visited)
         end
@@ -140,11 +144,11 @@ function DotExporter:_generate_subgraph_name(file_location)
 end
 
 ---Export edges between nodes (separate from node definitions)
----@param node table Node data structure
+---@param node Node Node data structure
 ---@param dot_lines string[] Array to append DOT lines to
 ---@param visited table<string, boolean> Track visited nodes to prevent infinite recursion
 function DotExporter:_export_edges(node, dot_lines, visited)
-    local node_id = self:_generate_node_id(node.data)
+    local node_id = self:_generate_node_id(node)
 
     -- Prevent infinite recursion
     if visited[node_id] then
@@ -153,9 +157,9 @@ function DotExporter:_export_edges(node, dot_lines, visited)
     visited[node_id] = true
 
     -- Process children and create edges
-    if node.children and not node.is_recursive then
+    if node.children and not node:is_recursive() then
         for _, child in ipairs(node.children) do
-            local child_id = self:_generate_node_id(child.data)
+            local child_id = self:_generate_node_id(child)
             -- Add edge from parent to child
             table.insert(dot_lines, string.format('  %s -> %s;', node_id, child_id))
             -- Recursively process child edges
@@ -164,40 +168,8 @@ function DotExporter:_export_edges(node, dot_lines, visited)
     end
 end
 
----Export a single node to DOT format
----@param node table Node data structure
----@param dot_lines string[] Array to append DOT lines to
----@param visited table<string, boolean> Track visited nodes to prevent infinite recursion
-function DotExporter:_export_node(node, dot_lines, visited)
-    local node_id = self:_generate_node_id(node.data)
-    local node_key = node_id
-
-    -- Prevent infinite recursion
-    if visited[node_key] then
-        return node_id
-    end
-    visited[node_key] = true
-
-    -- Add node definition
-    local label = self:_escape_string(self:_get_node_label(node.data))
-    local style = self:_get_node_style(node.data, node.is_recursive or false)
-
-    table.insert(dot_lines, string.format('  %s [label="%s", %s];', node_id, label, style))
-
-    -- Process children
-    if node.children and not node.is_recursive then
-        for _, child in ipairs(node.children) do
-            local child_id = self:_export_node(child, dot_lines, visited)
-            -- Add edge from parent to child
-            table.insert(dot_lines, string.format('  %s -> %s;', node_id, child_id))
-        end
-    end
-
-    return node_id
-end
-
 ---Export a Node tree to DOT (Graphviz) format with subgraphs grouped by file location
----@param root_node table
+---@param root_node Node
 ---@param opts callgraph.Opts.Export
 ---@return string DOT format string
 function DotExporter:export_to_dot(root_node, opts)
@@ -238,7 +210,7 @@ function DotExporter:export_to_dot(root_node, opts)
             local node_id = node_info.node_id
 
             local label = self:_escape_string(node.data.name or "unknown") -- Only show name in subgraph
-            local style = self:_get_node_style(node.data, node.is_recursive or false)
+            local style = self:_get_node_style(node, node:is_recursive())
 
             table.insert(dot_lines, string.format('    %s [label="%s", %s];', node_id, label, style))
         end
@@ -258,7 +230,7 @@ function DotExporter:export_to_dot(root_node, opts)
 end
 
 ---Export to DOT file
----@param root_node table The root node of the tree
+---@param root_node Node The root node of the tree
 ---@param opts callgraph.Opts.Export Options for exporting
 ---@return boolean success, string? error_message
 function DotExporter:export_to_file(root_node, opts)
@@ -277,13 +249,13 @@ end
 
 local exporter = DotExporter.new()
 
-return {
-    export = function(root_node, opts)
-        opts = opts or {
-            file_path = "/tmp/callgraph.dot",
-            graph_name = "CallGraph",
-            direction = "LR", -- LR, TB, BT, RL
-        }
-        return exporter:export_to_file(root_node, opts)
-    end,
-}
+local M = {}
+
+---@param root_node Node The root node of the tree
+---@param opts callgraph.Opts.Export? Options for exporting
+function M.export(root_node, opts)
+    opts = config.merge_opts(opts, config.defs.export)
+    return exporter:export_to_file(root_node, opts)
+end
+
+return M

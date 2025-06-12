@@ -24,7 +24,7 @@ M.opts = {}
 
 ---@param opts callgraph.Opts?
 function M.setup(opts)
-    M.opts = config.merge_opts(opts)
+    M.opts = config.merge_opts(opts, config.defs)
     vim.notify("Callgraph.nvim", vim.log.levels.INFO)
 
     set_keymaps()
@@ -32,12 +32,12 @@ end
 
 ---@param opts callgraph.Opts.Export
 function M._export(opts)
-    opts = vim.tbl_deep_extend("keep", opts or {}, config.defs.export)
+    opts = config.merge_opts(opts, config.defs.export)
 end
 
 ---@param opts callgraph.Opts.Run
 function M.run(opts)
-    opts = vim.tbl_deep_extend("keep", opts or {}, config.defs.run)
+    opts = config.merge_opts(opts, config.defs.run)
     require("callgraph.lsp.adapter").run(opts)
 end
 
