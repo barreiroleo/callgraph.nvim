@@ -14,14 +14,33 @@ local function get_client()
     return client
 end
 
+local N = {}
+
+---@param dir callgraph.Opts.Run.Dir
+---@return callgraph.Requester
+function N.select_request(dir)
+    if dir == "in" then
+        return N.request_incomingCalls
+    elseif dir == "out" then
+        return N.request_outgoingCalls
+    elseif dir == "mix" then
+        return function(client, request)
+            N.request_incomingCalls(client, request)
+            N.request_outgoingCalls(client, request)
+        end
+    else
+        error("Invalid direction: " .. dir)
+    end
+end
+
 ---@type callgraph.Requester
-local function request_outgoingCalls(client, request)
+function N.request_outgoingCalls(client, request)
     assert(request.item, "callHierarchy/outgoingCalls requires CallHierarchyItem")
 
     local success, req_id = client:request('callHierarchy/outgoingCalls', { item = request.item },
         function(err, res, ctx, conf)
             local response = { err = err, result = res, context = ctx, config = conf }
-            handlers.handler_outgoingCalls(response, request.ctx, request_outgoingCalls)
+            handlers.handler_outgoingCalls(response, request.ctx, N.request_outgoingCalls)
         end)
 
     if not success or not req_id then
@@ -34,13 +53,13 @@ local function request_outgoingCalls(client, request)
 end
 
 ---@type callgraph.Requester
-local function request_incomingCalls(client, request)
+function N.request_incomingCalls(client, request)
     assert(request.item, "callHierarchy/incomingCalls requires CallHierarchyItem")
 
     local success, req_id = client:request('callHierarchy/incomingCalls', { item = request.item },
         function(err, res, ctx, conf)
             local response = { err = err, result = res, context = ctx, config = conf }
-            handlers.handler_incomingCalls(response, request.ctx, request_incomingCalls)
+            handlers.handler_incomingCalls(response, request.ctx, N.request_incomingCalls)
         end)
 
     if not success or not req_id then
@@ -53,12 +72,12 @@ local function request_incomingCalls(client, request)
 end
 
 ---@type callgraph.Requester
-local function request_prepareCallHierarchy(client, request)
+function N.request_prepareCallHierarchy(client, request)
     assert(request.params, "textDocument/prepareCallHierarchy requires TextDocumentPositionParams")
 
     local success, req_id = client:request("textDocument/prepareCallHierarchy", request.params,
         function(err, res, ctx, conf)
-            local cb = request.ctx.opts.direction == "in" and request_incomingCalls or request_outgoingCalls
+            local cb = N.select_request(request.ctx.opts.direction)
             local response = { err = err, result = res, context = ctx, config = conf }
             handlers.handler_prepareCallHierarchy(response, request.ctx, cb)
         end)
@@ -92,7 +111,7 @@ function M.run(opts)
             opts = opts,
         }
     }
-    request_prepareCallHierarchy(client, request)
+    N.request_prepareCallHierarchy(client, request)
 end
 
 return M

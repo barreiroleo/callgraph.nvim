@@ -10,8 +10,9 @@ error('Cannot require a meta file')
 ---@field graph_name string Name for the graph
 ---@field direction "TB"|"LR"|"BT"|"RL" Direction
 
+---@alias callgraph.Opts.Run.Dir "in" | "out" | "mix"
 ---@class callgraph.Opts.Run
----@field direction "in" | "out"
+---@field direction callgraph.Opts.Run.Dir
 ---@field depth_limit_in integer?
 ---@field depth_limit_out integer?
 ---@field filter_location string[]? | fun(uri: string)?: boolean
