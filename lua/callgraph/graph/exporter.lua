@@ -237,6 +237,7 @@ function DotExporter:export_to_file(root_node, opts)
     local dot_content = self:export_to_dot(root_node, opts)
 
     local file, err = io.open(opts.file_path, 'w')
+    vim.notify("Exporting graph to " .. opts.file_path, vim.log.levels.INFO)
     if not file then
         return false, "Failed to open file: " .. (err or "unknown error")
     end
