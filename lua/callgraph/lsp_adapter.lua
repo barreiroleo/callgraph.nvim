@@ -72,6 +72,42 @@ end
 local M = {}
 
 ---@type callgraph.Handler
+function M.handler_outgoingCalls(response, ctx)
+    local client, result = process_response(response)
+    if not client or not result then
+        vim.notify("Could not process outgoing calls response", vim.log.levels.ERROR)
+        return
+    end
+    ---@cast result lsp.CallHierarchyOutgoingCall[]
+
+    --- Process all the outgoing items in the results and request the ougoing calls for they too
+    for _, call in ipairs(result) do
+        local node = Node.new({
+            kind = call.to.kind,
+            name = call.to.name,
+            location = call.to.uri,
+        }, ctx.root)
+
+        ---@type callgraph.Request
+        local request = { item = call.to, ctx = { root = node, opts = ctx.opts } }
+
+        if node.depth == ctx.opts.depth_limit_out then
+            vim.notify("Reached depth limit for outgoing calls: " .. ctx.opts.depth_limit_out, vim.log.levels.WARN)
+            return
+        end
+
+        if node.data.location:find(ctx.opts.filter_location or "", 1, true) then
+            vim.notify("Filtered out call to " .. node.data.location, vim.log.levels.DEBUG)
+            return
+        end
+
+        M.request_outgoingCalls(client, request)
+    end
+
+    vim.print(ctx.root)
+end
+
+---@type callgraph.Handler
 function M.handler_incomingCalls(response, ctx)
     local client, result = process_response(response)
     if not client or not result then
@@ -105,6 +141,18 @@ function M.handler_incomingCalls(response, ctx)
 
     vim.print(ctx.root)
 end
+
+---@type callgraph.Requester
+function M.request_outgoingCalls(client, request)
+    local success, req_id = client:request('callHierarchy/outgoingCalls', { item = request.item },
+        function(err, res, ctx, conf)
+            M.handler_outgoingCalls({ err = err, result = res, context = ctx, config = conf }, request.ctx)
+        end)
+    if not success then
+        vim.notify("Failed to request outgoing calls", vim.log.levels.ERROR)
+        return nil
+    end
+    return req_id
 end
 
 ---@type callgraph.Requester
