@@ -63,6 +63,43 @@ local function process_response(response)
     return client, response.result
 end
 
+local M = {}
+
+---@type callgraph.Handler
+function M.handler_incomingCalls(response, ctx)
+    local client, result = process_response(response)
+    if not client or not result then
+        vim.notify("Could not process incoming calls response", vim.log.levels.ERROR)
+        return
+    end
+    ---@cast result lsp.CallHierarchyIncomingCall[]
+
+    --- Process all the incoming items in the results and request the incoming calls for they too
+    for _, call in ipairs(result) do
+        local node = Node.new({
+            kind = call.from.kind,
+            name = call.from.name,
+            location = call.from.uri,
+        }, ctx.root)
+
+        ---@type callgraph.Request
+        local request = { item = call.from, ctx = { dir = ctx.dir, node } }
+        M.request_incomingCalls(client, request)
+    end
+end
+
+---@type callgraph.Requester
+function M.request_incomingCalls(client, request)
+    local success, req_id = client:request('callHierarchy/incomingCalls', { item = request.item },
+        function(err, res, ctx, conf)
+            M.handler_incomingCalls({ err = err, result = res, context = ctx, config = conf }, request.ctx)
+        end)
+    if not success then
+        vim.notify("Failed to request incoming calls", vim.log.levels.ERROR)
+        return nil
+    end
+    return req_id
+end
 
 ---@type callgraph.Handler
 local function handler_prepareCallHierarchy(response, ctx)
@@ -80,7 +117,7 @@ local function handler_prepareCallHierarchy(response, ctx)
 
     ---@type callgraph.Request
     local request = { item = result[1], ctx = ctx }
-    -- M.request_incomingCalls(client, request)
+    M.request_incomingCalls(client, request)
 end
 
 ---@type callgraph.Requester
