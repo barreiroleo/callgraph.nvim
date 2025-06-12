@@ -68,7 +68,12 @@ opts = {
 <!-- Replace with real screenshots or gifs -->
 Some examples from the included test project:
 
-![Call Graph Example](samples/call_graph.png)
+![main_outgoing](https://github.com/user-attachments/assets/55824029-9071-49d8-ac15-3725be8250fb)
+
+![main_outgoing_nofilter](https://github.com/user-attachments/assets/0fd03eca-b297-44f9-ad31-2b692d291aa7)
+
+![common_incoming](https://github.com/user-attachments/assets/ada8ddcc-4ca9-4770-82bd-0b88a937a205)
+
 
 ## Requirements
 - Neovim 0.12+ (Nightly recommended; not tested on 0.11 stable)
