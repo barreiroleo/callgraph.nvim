@@ -275,4 +275,15 @@ function DotExporter:export_to_file(root_node, opts)
     return true
 end
 
-return DotExporter
+local exporter = DotExporter.new()
+
+return {
+    export = function(root_node, opts)
+        opts = opts or {
+            file_path = "/tmp/callgraph.dot",
+            graph_name = "CallGraph",
+            direction = "LR", -- LR, TB, BT, RL
+        }
+        return exporter:export_to_file(root_node, opts)
+    end,
+}

@@ -1,6 +1,5 @@
 local Node = require("callgraph.tree.node")
 local process_response_errors = require("callgraph.lsp.errors").process_response_errors
-local exporter = require("callgraph.graph.exporter")
 
 local listener = require("callgraph.lsp.listener")
 
@@ -124,6 +123,8 @@ function M.handler_prepareCallHierarchy(response, ctx, cb)
     listener:set_on_finish(function()
         vim.notify("Callgraph finished", vim.log.levels.INFO)
         vim.print(node:dump_subtree())
+
+        require("callgraph.graph.exporter").export(node:dump_subtree())
     end)
 end
 
