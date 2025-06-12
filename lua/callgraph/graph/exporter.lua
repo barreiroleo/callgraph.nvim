@@ -93,7 +93,7 @@ function DotExporter:_get_file_location(node_data)
     if not node_data.location then
         return "unknown"
     end
-    
+
     local file = node_data.location:match("([^/]+)$") or node_data.location
     file = file:gsub("%%2B%%2B", "++") -- Decode URL encoding for C++
     return file
@@ -105,13 +105,13 @@ end
 ---@param visited table<string, boolean> Track visited nodes to prevent infinite recursion
 function DotExporter:_collect_nodes_by_file(node, file_groups, visited)
     local node_id = self:_generate_node_id(node.data)
-    
+
     -- Prevent infinite recursion
     if visited[node_id] then
         return
     end
     visited[node_id] = true
-    
+
     -- Group node by file location
     local file_location = self:_get_file_location(node.data)
     if not file_groups[file_location] then
@@ -121,7 +121,7 @@ function DotExporter:_collect_nodes_by_file(node, file_groups, visited)
         node = node,
         node_id = node_id
     })
-    
+
     -- Process children
     if node.children and not node.is_recursive then
         for _, child in ipairs(node.children) do
@@ -130,7 +130,7 @@ function DotExporter:_collect_nodes_by_file(node, file_groups, visited)
     end
 end
 
----Generate a unique subgraph name
+---Generate a unique subgraph name according to file location
 ---@param file_location string
 ---@return string
 function DotExporter:_generate_subgraph_name(file_location)
@@ -145,13 +145,13 @@ end
 ---@param visited table<string, boolean> Track visited nodes to prevent infinite recursion
 function DotExporter:_export_edges(node, dot_lines, visited)
     local node_id = self:_generate_node_id(node.data)
-    
+
     -- Prevent infinite recursion
     if visited[node_id] then
         return
     end
     visited[node_id] = true
-    
+
     -- Process children and create edges
     if node.children and not node.is_recursive then
         for _, child in ipairs(node.children) do
@@ -197,14 +197,10 @@ function DotExporter:_export_node(node, dot_lines, visited)
 end
 
 ---Export a Node tree to DOT (Graphviz) format with subgraphs grouped by file location
----@param root_node table The root node of the tree
----@param graph_name string? Optional name for the graph (default: "CallGraph")
----@param direction string? Optional direction ("TB", "LR", "BT", "RL") (default: "TB")
+---@param root_node table
+---@param opts callgraph.Opts.Export
 ---@return string DOT format string
-function DotExporter:export_to_dot(root_node, graph_name, direction)
-    graph_name = graph_name or "CallGraph"
-    direction = direction or "TB"
-
+function DotExporter:export_to_dot(root_node, opts)
     -- Reset state for new export
     self._node_counter = 0
     self._subgraph_counter = 0
@@ -213,11 +209,11 @@ function DotExporter:export_to_dot(root_node, graph_name, direction)
     local dot_lines = {}
 
     -- Start digraph
-    table.insert(dot_lines, string.format('digraph "%s" {', graph_name))
-    table.insert(dot_lines, '  rankdir=' .. direction .. ';')
+    table.insert(dot_lines, string.format('digraph "%s" {', opts.graph_name))
+    table.insert(dot_lines, '  rankdir=' .. opts.direction .. ';')
     table.insert(dot_lines, '  node [fontname="Arial", fontsize=10];')
     table.insert(dot_lines, '  edge [fontname="Arial", fontsize=8];')
-    table.insert(dot_lines, '  compound=true;')  -- Allow edges between subgraphs
+    table.insert(dot_lines, '  compound=true;') -- Allow edges between subgraphs
     table.insert(dot_lines, '')
 
     -- Collect all nodes grouped by file location
@@ -228,25 +224,25 @@ function DotExporter:export_to_dot(root_node, graph_name, direction)
     -- Create subgraphs for each file
     for file_location, nodes in pairs(file_groups) do
         local subgraph_name = self:_generate_subgraph_name(file_location)
-        
+
         table.insert(dot_lines, string.format('  subgraph %s {', subgraph_name))
         table.insert(dot_lines, string.format('    label="%s";', self:_escape_string(file_location)))
         table.insert(dot_lines, '    style=filled;')
         table.insert(dot_lines, '    fillcolor=lightgray;')
         table.insert(dot_lines, '    color=black;')
         table.insert(dot_lines, '')
-        
+
         -- Add nodes for this file
         for _, node_info in ipairs(nodes) do
             local node = node_info.node
             local node_id = node_info.node_id
-            
-            local label = self:_escape_string(node.data.name or "unknown")  -- Only show name in subgraph
+
+            local label = self:_escape_string(node.data.name or "unknown") -- Only show name in subgraph
             local style = self:_get_node_style(node.data, node.is_recursive or false)
-            
+
             table.insert(dot_lines, string.format('    %s [label="%s", %s];', node_id, label, style))
         end
-        
+
         table.insert(dot_lines, '  }')
         table.insert(dot_lines, '')
     end
@@ -263,15 +259,12 @@ end
 
 ---Export to DOT file
 ---@param root_node table The root node of the tree
----@param file_path string Path to write the DOT file
----@param graph_name string? Optional name for the graph
----@param direction string? Optional direction
----@return boolean success
----@return string? error_message
-function DotExporter:export_to_file(root_node, file_path, graph_name, direction)
-    local dot_content = self:export_to_dot(root_node, graph_name, direction)
+---@param opts callgraph.Opts.Export Options for exporting
+---@return boolean success, string? error_message
+function DotExporter:export_to_file(root_node, opts)
+    local dot_content = self:export_to_dot(root_node, opts)
 
-    local file, err = io.open(file_path, 'w')
+    local file, err = io.open(opts.file_path, 'w')
     if not file then
         return false, "Failed to open file: " .. (err or "unknown error")
     end

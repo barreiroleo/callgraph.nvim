@@ -58,7 +58,7 @@ local function request_prepareCallHierarchy(client, request)
 
     local success, req_id = client:request("textDocument/prepareCallHierarchy", request.params,
         function(err, res, ctx, conf)
-            local cb = request.ctx.opts.dir == "in" and request_incomingCalls or request_outgoingCalls
+            local cb = request.ctx.opts.direction == "in" and request_incomingCalls or request_outgoingCalls
             local response = { err = err, result = res, context = ctx, config = conf }
             handlers.handler_prepareCallHierarchy(response, request.ctx, cb)
         end)
@@ -74,14 +74,13 @@ end
 
 local M = {}
 
----@param opts callgraph.Opts?
+---@param opts callgraph.Opts.Run
 function M.run(opts)
-    opts = require("callgraph.config").merge_opts(opts)
     vim.notify("Running analysis with opts" .. vim.inspect(opts), vim.log.levels.INFO)
 
     local client = get_client()
     if not client then
-        vim.notify("Failed to find recursive calls", vim.log.levels.ERROR)
+        vim.notify("Failed to run the analysis", vim.log.levels.ERROR)
         return nil
     end
 

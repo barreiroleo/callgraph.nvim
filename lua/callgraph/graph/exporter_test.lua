@@ -3,30 +3,37 @@ local DotExporter = require("callgraph.graph.exporter")
 local expected_in_notify_clients = require("callgraph.graph.expected_notify_in")
 local expected_out_main = require("callgraph.graph.expected_main_out")
 
--- Test the exporter
-local function test_exporter()
+local function test_exporter_in()
     local exporter = DotExporter.new()
 
-    -- print("=== Testing Incoming Calls (notify_clients) ===")
-    -- vim.print(exporter:export_to_dot(expected_in_notify_clients, "IncomingCalls_notify_clients"))
-
-    -- print("=== Testing Outgoing Calls (notify_clients) ===")
-    -- vim.print(exporter:export_to_dot(expected_out_main, "OutgoingCalls_notify_clients"))
-
     -- Test file export
-    local success, err = exporter:export_to_file(expected_out_main, "/tmp/test_incoming.dot", "IncomingCalls")
+    local success, err = exporter:export_to_file(expected_in_notify_clients, {
+        file_path = "/tmp/test_incoming.dot",
+        graph_name = "IncomingCalls",
+        direction = "RL", -- Top to Bottom
+    })
     if success then
-        print("Successfully exported to /tmp/test_incoming.dot")
+        vim.print("Successfully exported to /tmp/test_incoming.dot")
     else
-        print("Failed to export: " .. (err or "unknown error"))
+        vim.print("Failed to export: " .. (err or "unknown error"))
     end
 end
 
--- Run the test
-test_exporter()
+local function test_exporter_out()
+    local exporter = DotExporter.new()
 
-return {
-    test_exporter = test_exporter,
-    expected_in_notify_clients = expected_in_notify_clients,
-    expected_out_notify_clients = expected_out_main
-}
+    -- Test file export
+    local success, err = exporter:export_to_file(expected_out_main, {
+        file_path = "/tmp/test_outgoing.dot",
+        graph_name = "OutgoingCalls",
+        direction = "LR", -- Left to Right
+    })
+    if success then
+        vim.print("Successfully exported to /tmp/test_outgoing.dot")
+    else
+        vim.print("Failed to export: " .. (err or "unknown error"))
+    end
+end
+
+test_exporter_in()
+test_exporter_out()

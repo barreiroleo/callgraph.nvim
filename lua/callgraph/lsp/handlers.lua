@@ -1,5 +1,6 @@
 local Node = require("callgraph.tree.node")
 local process_response_errors = require("callgraph.lsp.errors").process_response_errors
+local exporter = require("callgraph.graph.exporter")
 
 local listener = require("callgraph.lsp.listener")
 
@@ -8,6 +9,33 @@ local function process_response(response)
         listener:finish_request()
     end, 0)
     return process_response_errors(response)
+end
+
+
+---@param ctx callgraph.Request.Ctx
+---@param uri string
+---@return boolean value true if the child should be excluded, false otherwise
+local function should_exclude_child(ctx, uri)
+    if ctx.root._depth > ctx.opts.depth_limit_out then
+        vim.notify("Reached depth limit: " .. ctx.opts.depth_limit_out, vim.log.levels.WARN)
+        return true
+    end
+
+    if uri:find(ctx.opts.filter_location or "", 1, true) then
+        vim.notify("Filtered out call to " .. uri, vim.log.levels.TRACE)
+        return true
+    end
+
+    return false
+end
+
+---Replace the root_location in uri with "//"
+---@param ctx callgraph.Request.Ctx
+---@param uri string
+---@return string file_path relative to the root location
+local function short_uri(ctx, uri)
+    local location = uri:gsub(ctx.opts.root_location or "", "/")
+    return location
 end
 
 local M = {}
@@ -23,21 +51,15 @@ function M.handler_outgoingCalls(response, ctx, cb)
 
     --- Process all the outgoing items in the results and request the ougoing calls for they too
     for _, call in ipairs(result) do
+        if should_exclude_child(ctx, call.to.uri) then
+            goto continue
+        end
+
         local node = Node.new({
             kind = call.to.kind,
             name = call.to.name,
-            location = call.to.uri,
+            location = short_uri(ctx, call.to.uri),
         }, ctx.root)
-
-        if node._depth >= ctx.opts.depth_limit_out then
-            vim.notify("Reached depth limit for outgoing calls: " .. ctx.opts.depth_limit_out, vim.log.levels.WARN)
-            goto continue
-        end
-
-        if node.data.location:find(ctx.opts.filter_location or "", 1, true) then
-            vim.notify("Filtered out call to " .. node.data.location, vim.log.levels.DEBUG)
-            goto continue
-        end
 
         ---Request outgoing calls for call
         ---@type callgraph.Request
@@ -59,21 +81,15 @@ function M.handler_incomingCalls(response, ctx, cb)
 
     --- Process all the incoming items in the results and request the incoming calls for they too
     for _, call in ipairs(result) do
+        if should_exclude_child(ctx, call.from.uri) then
+            goto continue
+        end
+
         local node = Node.new({
             kind = call.from.kind,
             name = call.from.name,
-            location = call.from.uri,
+            location = short_uri(ctx, call.from.uri),
         }, ctx.root)
-
-        if node._depth >= ctx.opts.depth_limit_in then
-            vim.notify("Reached depth limit for incoming calls: " .. ctx.opts.depth_limit_in, vim.log.levels.WARN)
-            goto continue
-        end
-
-        if node.data.location:find(ctx.opts.filter_location or "", 1, true) then
-            vim.notify("Filtered out call to " .. node.data.location, vim.log.levels.DEBUG)
-            goto continue
-        end
 
         ---Request incoming calls for call
         ---@type callgraph.Request

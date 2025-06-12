@@ -30,11 +30,6 @@ function M.process_response_errors(response)
         return nil, nil
     end
 
-    if vim.tbl_isempty(response.result) then
-        vim.notify("Empty results. May hit a leaf call", vim.log.levels.TRACE)
-        return client, {}
-    end
-
     return client, response.result
 end
 
