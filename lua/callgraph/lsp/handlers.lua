@@ -20,7 +20,7 @@ local function should_exclude_child(ctx, uri)
         return true
     end
 
-    if uri:find(ctx.opts.filter_location or "", 1, true) then
+    if ctx.opts.filter_location(uri) then
         vim.notify("Filtered out call to " .. uri, vim.log.levels.TRACE)
         return true
     end

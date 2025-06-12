@@ -14,8 +14,8 @@ error('Cannot require a meta file')
 ---@field direction "in" | "out"
 ---@field depth_limit_in integer?
 ---@field depth_limit_out integer?
----@field filter_location string? location = "file:///usr/include/c%2B%2B/15.1.1/bits/stl_iterator.h",
----@field root_location string? vim.uri_from_fname(client.root_dir or vim.fn.getcwd())
+---@field filter_location string[]? | fun(uri: string)?: boolean
+---@field root_location string?
 
 ---@class callgraph.Entry
 ---@field kind lsp.SymbolKind

@@ -1,6 +1,6 @@
 local config = require("callgraph.config")
 
-local function set_keymaps()
+local function set_debug_keymaps()
     vim.keymap.set("n", "<leader><leader>z", function()
         require("lazy.core.loader").reload("callgraph.nvim")
         Snacks.notifier.clear_history()
@@ -25,19 +25,17 @@ M.opts = {}
 ---@param opts callgraph.Opts?
 function M.setup(opts)
     M.opts = config.merge_opts(opts, config.defs)
-    vim.notify("Callgraph.nvim", vim.log.levels.INFO)
-
-    set_keymaps()
+    -- set_debug_keymaps()
 end
 
 ---@param opts callgraph.Opts.Export
 function M._export(opts)
-    opts = config.merge_opts(opts, config.defs.export)
+    opts = config.merge_opts(opts, M.opts.export)
 end
 
 ---@param opts callgraph.Opts.Run
 function M.run(opts)
-    opts = config.merge_opts(opts, config.defs.run)
+    opts = config.merge_opts(opts, M.opts.run)
     require("callgraph.lsp.adapter").run(opts)
 end
 
