@@ -4,6 +4,7 @@
         "it",
         "describe",
         "before_each",
-        "after_each"
+        "after_each",
+        "lsp"
     ]
 }
