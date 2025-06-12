@@ -1,5 +1,3 @@
-local Node = require("callgraph.tree.node")
-local process_response = require("callgraph.lsp.errors").process_response
 local handlers = require("callgraph.lsp.handlers")
 
 ---@return vim.lsp.Client?
@@ -70,31 +68,26 @@ local function request_prepareCallHierarchy(client, request)
     return req_id
 end
 
+local M = {}
 
-
-return {
-    test = function()
-        local client = get_client()
-        if not client then
-            vim.notify("Failed to find recursive calls", vim.log.levels.ERROR)
-            return nil
-        end
-
-        ---@type callgraph.Request
-        local request = {
-            params = vim.lsp.util.make_position_params(0, client.offset_encoding),
-            ctx = {
-                root = nil,
-                opts = {
-                    dir = "out",
-                    depth_limit_in = 10,
-                    depth_limit_out = 6,
-                    filter_location = "/usr/include/c",
-                }
-            }
-        }
-        vim.print(request.ctx)
-
-        request_prepareCallHierarchy(client, request)
+---@param opts callgraph.Opts?
+function M.run(opts)
+    local client = get_client()
+    if not client then
+        vim.notify("Failed to find recursive calls", vim.log.levels.ERROR)
+        return nil
     end
-}
+
+    ---@type callgraph.Request
+    local request = {
+        params = vim.lsp.util.make_position_params(0, client.offset_encoding),
+        ctx = {
+            root = nil,
+            opts = require("callgraph").config.merge_opts(opts),
+        }
+    }
+
+    request_prepareCallHierarchy(client, request)
+end
+
+return M

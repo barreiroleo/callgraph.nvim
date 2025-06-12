@@ -8,8 +8,8 @@ error('Cannot require a meta file')
 
 ---@class callgraph.Opts
 ---@field dir "in" | "out"
----@field depth_limit_in integer
----@field depth_limit_out integer
+---@field depth_limit_in integer?
+---@field depth_limit_out integer?
 ---@field filter_location string? location = "file:///usr/include/c%2B%2B/15.1.1/bits/stl_iterator.h",
 
 ---@class callgraph.Request.Ctx
