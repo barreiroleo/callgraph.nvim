@@ -68,13 +68,17 @@ end
 ---Get node style based on kind and recursive status
 ---@param node Node<callgraph.Entry>
 ---@param is_recursive boolean
+---@param is_root boolean?
 ---@return string
-function DotExporter:_get_node_style(node, is_recursive)
+function DotExporter:_get_node_style(node, is_recursive, is_root)
     local kind = node.data.kind or 0
     local style = ""
 
+    -- Special styling for root node
+    if is_root then
+        style = 'shape=box, style=filled, fillcolor=lightcoral'
     -- Different colors/shapes for different symbol kinds
-    if kind == 6 then      -- Method/Function
+    elseif kind == 6 then      -- Method/Function
         style = 'shape=box, style=filled, fillcolor=lightblue'
     elseif kind == 12 then -- Function
         style = 'shape=ellipse, style=filled, fillcolor=lightgreen'
@@ -82,8 +86,8 @@ function DotExporter:_get_node_style(node, is_recursive)
         style = 'shape=box, style=filled, fillcolor=lightgray'
     end
 
-    -- Mark recursive nodes with different border
-    if is_recursive then
+    -- Mark recursive nodes with different border (unless it's the root)
+    if is_recursive and not is_root then
         style = style .. ', color=red, penwidth=2'
     end
 
@@ -160,8 +164,16 @@ function DotExporter:_export_edges(node, dot_lines, visited)
     if node.children and not node:is_recursive() then
         for _, child in ipairs(node.children) do
             local child_id = self:_generate_node_id(child)
-            -- Add edge from parent to child
-            table.insert(dot_lines, string.format('  %s -> %s;', node_id, child_id))
+
+            -- Determine arrow direction based on call relationship type
+            if child.data.call_type == "incoming" then
+                -- For incoming calls: child calls parent, so arrow goes child -> parent
+                table.insert(dot_lines, string.format('  %s -> %s;', child_id, node_id))
+            else
+                -- For outgoing calls (or unspecified): parent calls child, so arrow goes parent -> child
+                table.insert(dot_lines, string.format('  %s -> %s;', node_id, child_id))
+            end
+
             -- Recursively process child edges
             self:_export_edges(child, dot_lines, visited)
         end
@@ -210,7 +222,8 @@ function DotExporter:export_to_dot(root_node, opts)
             local node_id = node_info.node_id
 
             local label = self:_escape_string(node.data.name or "unknown") -- Only show name in subgraph
-            local style = self:_get_node_style(node, node:is_recursive())
+            local is_root = node == root_node
+            local style = self:_get_node_style(node, node:is_recursive(), is_root)
 
             table.insert(dot_lines, string.format('    %s [label="%s", %s];', node_id, label, style))
         end

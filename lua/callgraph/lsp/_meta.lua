@@ -22,6 +22,7 @@ error('Cannot require a meta file')
 ---@field kind lsp.SymbolKind
 ---@field name string
 ---@field location lsp.URI
+---@field call_type "outgoing"|"incoming"? The type of call relationship this node represents
 
 ---@class callgraph.Request.Ctx
 ---@field root Node<callgraph.Entry>?

@@ -58,6 +58,7 @@ function M.handler_outgoingCalls(response, ctx, cb)
             kind = call.to.kind,
             name = call.to.name,
             location = short_uri(ctx, call.to.uri),
+            call_type = "outgoing",
         }, ctx.root)
 
         ---Request outgoing calls for call
@@ -88,6 +89,7 @@ function M.handler_incomingCalls(response, ctx, cb)
             kind = call.from.kind,
             name = call.from.name,
             location = short_uri(ctx, call.from.uri),
+            call_type = "incoming",
         }, ctx.root)
 
         ---Request incoming calls for call
@@ -113,6 +115,7 @@ function M.handler_prepareCallHierarchy(response, ctx, cb)
         kind = result[1].kind,
         name = result[1].name,
         location = result[1].uri,
+        call_type = nil, -- Root node has no call relationship
     })
 
     ---Request outgoing or incoming calls based on the direction
