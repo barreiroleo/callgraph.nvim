@@ -123,11 +123,7 @@ function M.handler_prepareCallHierarchy(response, ctx, cb)
     local request = { item = result[1], ctx = { root = node, opts = ctx.opts } }
     cb(client, request)
 
-    listener:set_on_finish(function()
-        vim.notify("Callgraph finished", vim.log.levels.INFO)
-        -- vim.print(node:dump_subtree())
-        require("callgraph.graph.exporter").export(node, require("callgraph").opts.export)
-    end)
+    listener:set_on_finish(require("callgraph")._on_finish)
 end
 
 return M

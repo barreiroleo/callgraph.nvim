@@ -42,6 +42,13 @@ M.defs = {
         file_path = "/tmp/callgraph.dot",
         graph_name = "CallGraph",
         direction = "LR", -- TB, LR, BT, RL
+    },
+
+    _dev = {
+        profiling = false,
+        log_level = vim.log.levels.TRACE,
+        on_start = nil,
+        on_finish = nil,
     }
 }
 

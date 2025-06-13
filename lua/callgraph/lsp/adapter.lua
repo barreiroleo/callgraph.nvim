@@ -95,7 +95,7 @@ local M = {}
 
 ---@param opts callgraph.Opts.Run
 function M.run(opts)
-    vim.notify("Running callgraph analysis: " .. vim.inspect(opts), vim.log.levels.INFO)
+    require("callgraph")._on_start(opts)
 
     local client = get_client()
     if not client then
@@ -111,6 +111,7 @@ function M.run(opts)
             opts = opts,
         }
     }
+
     N.request_prepareCallHierarchy(client, request)
 end
 

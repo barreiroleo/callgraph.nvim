@@ -1,8 +1,6 @@
 ---@module "callgraph.tree.node"
 ---@module "callgraph.lsp._meta"
 
-local config = require("callgraph.config")
-
 ---@class DotExporter
 ---@field private _node_counter integer
 ---@field private _node_ids table<string, string>
@@ -266,9 +264,8 @@ local exporter = DotExporter.new()
 local M = {}
 
 ---@param root_node Node The root node of the tree
----@param opts callgraph.Opts.Export? Options for exporting
+---@param opts callgraph.Opts.Export Options for exporting
 function M.export(root_node, opts)
-    opts = config.merge_opts(opts, config.defs.export)
     return exporter:export_to_file(root_node, opts)
 end
 

@@ -1,3 +1,5 @@
+---@module 'callgraph'
+
 ---@class callgraph.Listener
 ---@field pending_requests table<integer>
 ---@field completed_requests integer
@@ -39,7 +41,7 @@ function Listener:finish_request()
     end
 end
 
----@param on_finish function
+---@param on_finish fun(root: Node)
 function Listener:set_on_finish(on_finish)
     self.on_finish = on_finish
 end

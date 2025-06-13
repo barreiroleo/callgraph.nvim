@@ -4,6 +4,13 @@ error('Cannot require a meta file')
 ---@class callgraph.Opts
 ---@field run callgraph.Opts.Run?
 ---@field export callgraph.Opts.Export?
+---@field _dev callgraph.Opts.Dev?
+
+---@class callgraph.Opts.Dev
+---@field profiling boolean? Enable profiling
+---@field log_level vim.log.levels? Log level for debugging
+---@field on_start fun(opts: callgraph.Opts.Run)? Called when the callgraph request is started
+---@field on_finish fun(root: Node)? Called when the callgraph request is finished
 
 ---@class callgraph.Opts.Export
 ---@field file_path string Path to write the DOT file
@@ -17,6 +24,8 @@ error('Cannot require a meta file')
 ---@field depth_limit_out integer?
 ---@field filter_location string[]? | fun(uri: string)?: boolean
 ---@field root_location string?
+---@field on_start fun(opts: callgraph.Opts.Run)?
+---@field on_finish fun(root: Node)?
 
 ---@class callgraph.Entry
 ---@field kind lsp.SymbolKind
