@@ -10,6 +10,18 @@ local function process_response(response)
     return process_response_errors(response)
 end
 
+---@param uri string
+---@param filters string[]
+---@return boolean value true if the uri should be filtered out, false otherwise
+local function filter_location(uri, filters)
+    for _, filter in ipairs(filters) do
+        if uri:find(filter or "", 1, true) then
+            return true
+        end
+    end
+    return false
+end
+
 
 ---@param ctx callgraph.Request.Ctx
 ---@param uri string
@@ -20,7 +32,9 @@ local function should_exclude_child(ctx, uri)
         return true
     end
 
-    if ctx.opts.filter_location(uri) then
+    local filter = ctx.opts.filter_location
+    if type(filter) == "function" and filter(uri) or
+        type(filter) == "table" and filter_location(uri, filter) then
         -- vim.notify("Filtered out call to " .. uri, vim.log.levels.TRACE)
         return true
     end
