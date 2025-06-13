@@ -137,7 +137,9 @@ function M.handler_prepareCallHierarchy(response, ctx, cb)
     local request = { item = result[1], ctx = { root = node, opts = ctx.opts } }
     cb(client, request)
 
-    listener:set_on_finish(require("callgraph")._on_finish)
+    listener:set_on_finish(function()
+        require("callgraph")._on_finish(node)
+    end)
 end
 
 return M

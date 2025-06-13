@@ -41,7 +41,7 @@ function Listener:finish_request()
     end
 end
 
----@param on_finish fun(root: Node)
+---@param on_finish fun(...)
 function Listener:set_on_finish(on_finish)
     self.on_finish = on_finish
 end
