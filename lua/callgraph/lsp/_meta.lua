@@ -23,6 +23,7 @@ error('Cannot require a meta file')
 ---@field depth_limit_in integer?
 ---@field depth_limit_out integer?
 ---@field filter_location string[]? | fun(uri: string)?: boolean
+---@field invert_filter boolean? True only include the results in filter_location
 ---@field root_location string?
 ---@field on_start fun(opts: callgraph.Opts.Run)?
 ---@field on_finish fun(root: Node)?

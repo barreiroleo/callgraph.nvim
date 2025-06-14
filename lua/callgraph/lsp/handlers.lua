@@ -12,14 +12,15 @@ end
 
 ---@param uri string
 ---@param filters string[]
+---@param invert_filter boolean
 ---@return boolean value true if the uri should be filtered out, false otherwise
-local function filter_location(uri, filters)
+local function filter_location(uri, filters, invert_filter)
     for _, filter in ipairs(filters) do
         if uri:find(filter or "", 1, true) then
-            return true
+            return not invert_filter
         end
     end
-    return false
+    return invert_filter
 end
 
 
@@ -28,14 +29,13 @@ end
 ---@return boolean value true if the child should be excluded, false otherwise
 local function should_exclude_child(ctx, uri)
     if ctx.root._depth > ctx.opts.depth_limit_out then
-        vim.notify("Reached depth limit: " .. ctx.opts.depth_limit_out, vim.log.levels.WARN)
+        -- vim.notify("Reached depth limit: " .. ctx.opts.depth_limit_out, vim.log.levels.DEBUG)
         return true
     end
 
     local filter = ctx.opts.filter_location
     if type(filter) == "function" and filter(uri) or
-        type(filter) == "table" and filter_location(uri, filter) then
-        -- vim.notify("Filtered out call to " .. uri, vim.log.levels.TRACE)
+        type(filter) == "table" and filter_location(uri, filter, ctx.opts.invert_filter) then
         return true
     end
 

@@ -7,6 +7,7 @@ M.defs = {
         depth_limit_in = 10,
         depth_limit_out = 6,
         filter_location = { "/usr/include/c", "/usr/include/c++" },
+        invert_filter = false,
         root_location = vim.uri_from_fname(vim.fn.getcwd()),
     },
 
