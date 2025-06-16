@@ -34,10 +34,7 @@ function M._on_start(opts)
         M.opts._dev.on_start(opts)
     end
     if M.opts._dev.profiling then
-        ---@diagnostic disable-next-line: missing-fields
-        Snacks.profiler.start({
-            group = "name", sort = "time", structure = true, filter = { def_plugin = "callgraph.nvim" }
-        })
+        Snacks.profiler.start()
     end
 
     vim.notify("Running callgraph analysis: " .. vim.inspect(opts), vim.log.levels.INFO)
@@ -49,7 +46,7 @@ function M._on_finish(root)
         M.opts._dev.on_finish(root)
     end
     if M.opts._dev.profiling then
-        Snacks.profiler.stop({ group = "name", sort = "time", structure = true, filter = { def_plugin = "callgraph.nvim" } })
+        Snacks.profiler.stop({ group = "name", sort = "time", structure = true, filter = { ref_plugin = "callgraph.nvim" } })
     end
 
     vim.notify("Callgraph finished", vim.log.levels.INFO)

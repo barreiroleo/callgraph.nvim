@@ -54,4 +54,4 @@ error('Cannot require a meta file')
 ---@field lsp callgraph.Response.Lsp
 
 ---@alias callgraph.Handler fun(response: callgraph.Response.Lsp, ctx_callgraph: callgraph.Request.Ctx, cb: callgraph.Requester?): ...any
----@alias callgraph.Requester fun(client: vim.lsp.Client, ctx: callgraph.Request): integer?
+---@alias callgraph.Requester fun(client: vim.lsp.Client, ctx: callgraph.Request, cb:callgraph.Requester): integer?

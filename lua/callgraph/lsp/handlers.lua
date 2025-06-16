@@ -78,7 +78,7 @@ function M.handler_outgoingCalls(response, ctx, cb)
         ---Request outgoing calls for call
         ---@type callgraph.Request
         local request = { item = call.to, ctx = { root = node, opts = ctx.opts } }
-        cb(client, request)
+        cb(client, request, cb)
 
         ::continue::
     end
@@ -109,7 +109,7 @@ function M.handler_incomingCalls(response, ctx, cb)
         ---Request incoming calls for call
         ---@type callgraph.Request
         local request = { item = call.from, ctx = { root = node, opts = ctx.opts } }
-        cb(client, request)
+        cb(client, request, cb)
 
         ::continue::
     end
@@ -135,7 +135,7 @@ function M.handler_prepareCallHierarchy(response, ctx, cb)
     ---Request outgoing or incoming calls based on the direction
     ---@type callgraph.Request
     local request = { item = result[1], ctx = { root = node, opts = ctx.opts } }
-    cb(client, request)
+    cb(client, request, cb)
 
     listener:set_on_finish(function()
         require("callgraph")._on_finish(node)
