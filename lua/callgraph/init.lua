@@ -52,7 +52,7 @@ function M._on_finish(root)
     end
 
     vim.notify("Callgraph finished", vim.log.levels.INFO)
-    vim.print(root:dump_subtree())
+    -- vim.print(root:dump_subtree())
     require("callgraph.graph.exporter").export(root, M.opts.export)
 end
 

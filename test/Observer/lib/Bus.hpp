@@ -30,12 +30,12 @@ public:
     void subscribe(IObserver<TData>& client)
     {
         std::cout << "Subscribing client\n";
-        clients.push_back(&client);
+        m_clients.push_back(&client);
     }
 
     void notify_clients(const TData&& data)
     {
-        for (const auto& client : clients) {
+        for (const auto& client : m_clients) {
             std::cout << "Notifying client\n";
 
             if (client->notify(data) != Status::OK) {
@@ -45,7 +45,7 @@ public:
     }
 
 private:
-    std::vector<IObserver<TData>*> clients;
+    std::vector<IObserver<TData>*> m_clients;
 };
 
 }

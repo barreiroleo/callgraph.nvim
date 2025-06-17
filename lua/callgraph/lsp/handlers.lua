@@ -43,11 +43,11 @@ local function should_exclude_child(ctx, uri)
 end
 
 ---Replace the root_location in uri with "//"
----@param ctx callgraph.Request.Ctx
+---@param root_location string
 ---@param uri string
 ---@return string file_path relative to the root location
-local function short_uri(ctx, uri)
-    local location = uri:gsub(ctx.opts.root_location or "", "/")
+local function short_uri(root_location, uri)
+    local location = uri:gsub(root_location or "", "/")
     return location
 end
 
@@ -71,7 +71,7 @@ function M.handler_outgoingCalls(response, ctx, cb)
         local node = Node.new({
             kind = call.to.kind,
             name = call.to.name,
-            location = short_uri(ctx, call.to.uri),
+            location = short_uri(ctx.opts.root_location, call.to.uri),
             call_type = "outgoing",
         }, ctx.root)
 
@@ -102,7 +102,7 @@ function M.handler_incomingCalls(response, ctx, cb)
         local node = Node.new({
             kind = call.from.kind,
             name = call.from.name,
-            location = short_uri(ctx, call.from.uri),
+            location = short_uri(ctx.opts.root_location, call.from.uri),
             call_type = "incoming",
         }, ctx.root)
 
@@ -128,7 +128,7 @@ function M.handler_prepareCallHierarchy(response, ctx, cb)
     local node = Node.new({
         kind = result[1].kind,
         name = result[1].name,
-        location = result[1].uri,
+        location = short_uri(ctx.opts.root_location, result[1].uri),
         call_type = nil, -- Root node has no call relationship
     }, ctx.root)
 

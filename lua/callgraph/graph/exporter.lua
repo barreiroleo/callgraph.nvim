@@ -52,7 +52,8 @@ function DotExporter:_get_node_label(node)
     -- Extract filename from location for cleaner display
     local file = ""
     if data.location then
-        file = data.location:match("([^/]+)$") or data.location
+        local location_str = tostring(data.location)
+        file = location_str:match("([^/]+)$") or location_str
         file = file:gsub("%%2B%%2B", "++") -- Decode URL encoding for C++
     end
 
@@ -100,16 +101,30 @@ function DotExporter:_get_file_location(node)
         return "unknown"
     end
 
-    local file = node.data.location:match("([^/]+)$") or node.data.location
+    local location_str = tostring(node.data.location)
+    local file = location_str:match("([^/]+)$") or location_str
     file = file:gsub("%%2B%%2B", "++") -- Decode URL encoding for C++
     return file
+end
+
+---Check if a node is a virtual root node (empty data)
+---@param node Node<callgraph.Entry>
+---@return boolean
+function DotExporter:_is_virtual_root(node)
+    local data = node.data
+    if not data then
+        return true
+    end
+    -- Check if the node has meaningful data
+    return not (data.name or data.kind or data.location)
 end
 
 ---Collect all nodes and group them by file location
 ---@param node Node Node data structure
 ---@param file_groups table<string, table[]> Table to store nodes grouped by file
 ---@param visited table<string, boolean> Track visited nodes to prevent infinite recursion
-function DotExporter:_collect_nodes_by_file(node, file_groups, visited)
+---@param skip_current boolean? Whether to skip the current node (for virtual root)
+function DotExporter:_collect_nodes_by_file(node, file_groups, visited, skip_current)
     local node_id = self:_generate_node_id(node)
 
     -- Prevent infinite recursion
@@ -118,20 +133,23 @@ function DotExporter:_collect_nodes_by_file(node, file_groups, visited)
     end
     visited[node_id] = true
 
-    -- Group node by file location
-    local file_location = self:_get_file_location(node)
-    if not file_groups[file_location] then
-        file_groups[file_location] = {}
+    -- Skip adding the virtual root to the graph
+    if not skip_current then
+        -- Group node by file location
+        local file_location = self:_get_file_location(node)
+        if not file_groups[file_location] then
+            file_groups[file_location] = {}
+        end
+        table.insert(file_groups[file_location], {
+            node = node,
+            node_id = node_id
+        })
     end
-    table.insert(file_groups[file_location], {
-        node = node,
-        node_id = node_id
-    })
 
     -- Process children
     if node.children and not node:is_recursive() then
         for _, child in ipairs(node.children) do
-            self:_collect_nodes_by_file(child, file_groups, visited)
+            self:_collect_nodes_by_file(child, file_groups, visited, false)
         end
     end
 end
@@ -149,7 +167,8 @@ end
 ---@param node Node Node data structure
 ---@param dot_lines string[] Array to append DOT lines to
 ---@param visited table<string, boolean> Track visited nodes to prevent infinite recursion
-function DotExporter:_export_edges(node, dot_lines, visited)
+---@param skip_current boolean? Whether to skip creating edges from the current node (for virtual root)
+function DotExporter:_export_edges(node, dot_lines, visited, skip_current)
     local node_id = self:_generate_node_id(node)
 
     -- Prevent infinite recursion
@@ -163,17 +182,23 @@ function DotExporter:_export_edges(node, dot_lines, visited)
         for _, child in ipairs(node.children) do
             local child_id = self:_generate_node_id(child)
 
-            -- Determine arrow direction based on call relationship type
-            if child.data.call_type == "incoming" then
-                -- For incoming calls: child calls parent, so arrow goes child -> parent
-                table.insert(dot_lines, string.format('  %s -> %s;', child_id, node_id))
-            else
-                -- For outgoing calls (or unspecified): parent calls child, so arrow goes parent -> child
-                table.insert(dot_lines, string.format('  %s -> %s;', node_id, child_id))
+            -- Skip creating edges from virtual root to its children
+            if not skip_current then
+                -- Determine arrow direction based on call relationship type
+                ---@type callgraph.Entry
+                local child_data = child.data
+                local call_type = child_data.call_type
+                if call_type == "incoming" then
+                    -- For incoming calls: child calls parent, so arrow goes child -> parent
+                    table.insert(dot_lines, string.format('  %s -> %s;', child_id, node_id))
+                else
+                    -- For outgoing calls (or unspecified): parent calls child, so arrow goes parent -> child
+                    table.insert(dot_lines, string.format('  %s -> %s;', node_id, child_id))
+                end
             end
 
             -- Recursively process child edges
-            self:_export_edges(child, dot_lines, visited)
+            self:_export_edges(child, dot_lines, visited, false)
         end
     end
 end
@@ -201,7 +226,19 @@ function DotExporter:export_to_dot(root_node, opts)
     -- Collect all nodes grouped by file location
     local file_groups = {}
     local visited_collect = {}
-    self:_collect_nodes_by_file(root_node, file_groups, visited_collect)
+    local is_virtual_root = self:_is_virtual_root(root_node)
+    
+    if is_virtual_root then
+        -- Skip the virtual root node, but collect its children
+        visited_collect[self:_generate_node_id(root_node)] = true
+        if root_node.children then
+            for _, child in ipairs(root_node.children) do
+                self:_collect_nodes_by_file(child, file_groups, visited_collect, false)
+            end
+        end
+    else
+        self:_collect_nodes_by_file(root_node, file_groups, visited_collect, false)
+    end
 
     -- Create subgraphs for each file
     for file_location, nodes in pairs(file_groups) do
@@ -221,6 +258,17 @@ function DotExporter:export_to_dot(root_node, opts)
 
             local label = self:_escape_string(node.data.name or "unknown") -- Only show name in subgraph
             local is_root = node == root_node
+            
+            -- If root is virtual, treat its direct children as roots
+            if is_virtual_root and root_node.children then
+                for _, child in ipairs(root_node.children) do
+                    if child == node then
+                        is_root = true
+                        break
+                    end
+                end
+            end
+            
             local style = self:_get_node_style(node, node:is_recursive(), is_root)
 
             table.insert(dot_lines, string.format('    %s [label="%s", %s];', node_id, label, style))
@@ -232,7 +280,12 @@ function DotExporter:export_to_dot(root_node, opts)
 
     -- Add edges between nodes
     local visited_edges = {}
-    self:_export_edges(root_node, dot_lines, visited_edges)
+    if is_virtual_root then
+        -- Start edge export from virtual root's children, skipping edges from virtual root
+        self:_export_edges(root_node, dot_lines, visited_edges, true)
+    else
+        self:_export_edges(root_node, dot_lines, visited_edges, false)
+    end
 
     -- End digraph
     table.insert(dot_lines, '}')
