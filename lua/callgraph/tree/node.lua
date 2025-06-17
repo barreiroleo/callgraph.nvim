@@ -27,14 +27,14 @@ local Node = {}
 Node.__index = Node
 
 ---@generic T
----@param data T
+---@param data T?
 ---@param parent Node?
 ---@return Node<T>
 function Node.new(data, parent)
     local self = setmetatable({}, Node)
     self.parent = parent
     self.children = {}
-    self.data = data
+    self.data = data or {}
     self._depth = parent and parent._depth + 1 or 0
     self._child_lookup = {}
     self._is_recursive = false

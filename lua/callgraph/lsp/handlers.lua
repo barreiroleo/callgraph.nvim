@@ -130,16 +130,12 @@ function M.handler_prepareCallHierarchy(response, ctx, cb)
         name = result[1].name,
         location = result[1].uri,
         call_type = nil, -- Root node has no call relationship
-    })
+    }, ctx.root)
 
     ---Request outgoing or incoming calls based on the direction
     ---@type callgraph.Request
     local request = { item = result[1], ctx = { root = node, opts = ctx.opts } }
     cb(client, request, cb)
-
-    listener:set_on_finish(function()
-        require("callgraph")._on_finish(node)
-    end)
 end
 
 return M

@@ -1,18 +1,8 @@
+local Node = require("callgraph.tree.node")
+
+local lsp_utils = require("callgraph.lsp.utils")
 local handlers = require("callgraph.lsp.handlers")
 local listener = require("callgraph.lsp.listener")
-
----@return vim.lsp.Client?
-local function get_client()
-    local client = vim.lsp.get_clients({ method = "textDocument/prepareCallHierarchy" })[1]
-
-    if not client then
-        vim.notify("No LSP client found for call hierarchy", vim.log.levels.ERROR)
-        return nil
-    end
-
-    -- vim.notify("Found client " .. client.name, vim.log.levels.TRACE)
-    return client
-end
 
 local N = {}
 
@@ -92,27 +82,36 @@ end
 
 local M = {}
 
+---@param loc_params lsp.TextDocumentPositionParams[]
 ---@param opts callgraph.Opts.Run
-function M.run(opts)
+function M.run(loc_params, opts)
     require("callgraph")._on_start(opts)
 
-    local client = get_client()
+    local client = lsp_utils.get_client()
     if not client then
         vim.notify("Failed to run the analysis", vim.log.levels.ERROR)
         return nil
     end
 
-    ---@type callgraph.Request
-    local request = {
-        params = vim.lsp.util.make_position_params(0, client.offset_encoding),
-        ctx = {
-            root = nil,
-            opts = opts,
-        }
-    }
+    local root = Node.new()
 
-    local callback = N.select_request(request.ctx.opts.direction)
-    N.request_prepareCallHierarchy(client, request, callback)
+    for _, param in ipairs(loc_params) do
+        ---@type callgraph.Request
+        local request = {
+            params = param,
+            ctx = {
+                root = root,
+                opts = opts,
+            }
+        }
+
+        local callback = N.select_request(request.ctx.opts.direction)
+        N.request_prepareCallHierarchy(client, request, callback)
+    end
+
+    listener:set_on_finish(function()
+        require("callgraph")._on_finish(root)
+    end)
 end
 
 return M
