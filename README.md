@@ -4,21 +4,18 @@ A Neovim plugin for visualizing call graphs, based on LSP call hierarchy feature
 
 ## Features
 - **Multi-directional analysis**: Visualize incoming, outgoing, or mixed call graphs for functions and methods
-- **Smart export to Graphviz**: Export call graphs to DOT format with subgraphs grouped by file location
+- **Export to Graphviz**: Export call graphs to DOT format with subgraphs grouped by file location
 - **Flexible filtering**: Custom location filters with invert option to include/exclude specific paths
 - **Customizable depth limits**: Independent depth control for incoming and outgoing calls
 - **Recursive call detection**: Visual highlighting of recursive function calls with special styling
 - **Multi-location support**: Analyze call graphs from multiple cursor positions simultaneously
 - **Extensible hooks**: Custom callbacks for analysis start and completion events
-
-### Graph Features
-
-The generated DOT files include:
-- **File-based subgraphs**: Functions are grouped by their source files
-- **Recursive call highlighting**: Recursive functions have red borders
-- **Root node emphasis**: Starting functions are highlighted in coral
 - **Symbol type styling**: Different colors for functions vs methods
-- **Clean labels**: File names and function names for easy reading
+  
+## Requirements
+- Neovim 0.12+ (Nightly recommended; not tested on 0.11 stable)
+- An LSP server that supports call hierarchy (e.g., clangd)
+- A Graphviz DOT visualizer of your choice (e.g., `xdot` _recomended_, `graphviz`, online viewers)
 
 ## Installation
 
@@ -158,20 +155,11 @@ require("callgraph").run(
 
 ## Showcase
 
-<!-- Replace with real screenshots or gifs -->
-Some examples from the included test project:
+- Coral square boxes represent items under test.
+- Green ellipses are static functions.
+- Blue square boxes are class methods.
 
-![main_outgoing](https://github.com/user-attachments/assets/55824029-9071-49d8-ac15-3725be8250fb)
-
-![main_outgoing_nofilter](https://github.com/user-attachments/assets/0fd03eca-b297-44f9-ad31-2b692d291aa7)
-
-![common_incoming](https://github.com/user-attachments/assets/ada8ddcc-4ca9-4770-82bd-0b88a937a205)
-
-
-## Requirements
-- Neovim 0.12+ (Nightly recommended; not tested on 0.11 stable)
-- An LSP server that supports call hierarchy (e.g., clangd)
-- A Graphviz DOT visualizer of your choice (e.g., `xdot` _recomended_, `graphviz`, online viewers)
+![callgraph_multi](https://github.com/user-attachments/assets/4167e41c-99c5-4a54-bf9d-829501f3b876)
 
 ## Roadmap / Next Steps
 
