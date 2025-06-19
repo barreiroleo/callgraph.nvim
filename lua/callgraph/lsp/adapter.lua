@@ -4,6 +4,42 @@ local lsp_utils = require("callgraph.lsp.utils")
 local handlers = require("callgraph.lsp.handlers")
 local listener = require("callgraph.lsp.listener")
 
+---@param loc_params lsp.TextDocumentPositionParams[]
+---@param opts callgraph.Opts.Run
+---@param dev callgraph.Opts.Dev
+local function on_start(loc_params, opts, dev)
+    vim.notify("Running callgraph analysis: " .. vim.inspect(opts), vim.log.levels.INFO)
+
+    if dev.dump_locations then
+        vim.notify(vim.inspect(loc_params), vim.log.levels.DEBUG)
+    end
+    if dev.on_start then
+        dev.on_start(opts)
+    end
+    if dev.profiling then
+        Snacks.profiler.start()
+    end
+end
+
+---@param root Node
+---@param dev callgraph.Opts.Dev
+local function on_finish(root, dev)
+    vim.notify("Callgraph finished", vim.log.levels.INFO)
+
+    if dev.on_finish then
+        dev.on_finish(root)
+    end
+    if dev.profiling then
+        Snacks.profiler.stop({ group = "name", sort = "time", structure = true, filter = { ref_plugin = "callgraph.nvim" } })
+    end
+    if dev.dump_tree then
+        vim.print(root:dump_subtree())
+    end
+
+    require("callgraph.graph.exporter").export(root)
+end
+
+
 local N = {}
 
 ---@param dir callgraph.Opts.Run.Dir
@@ -84,14 +120,15 @@ local M = {}
 
 ---@param loc_params lsp.TextDocumentPositionParams[]
 ---@param opts callgraph.Opts.Run
-function M.run(loc_params, opts)
-    require("callgraph")._on_start(opts)
-
+---@param dev callgraph.Opts.Dev
+function M.run(loc_params, opts, dev)
     local client = lsp_utils.get_client()
     if not client then
         vim.notify("Failed to run the analysis", vim.log.levels.ERROR)
         return nil
     end
+
+    on_start(loc_params, opts, dev)
 
     local root = Node.new()
 
@@ -110,7 +147,7 @@ function M.run(loc_params, opts)
     end
 
     listener:set_on_finish(function()
-        require("callgraph")._on_finish(root)
+        on_finish(root, dev)
     end)
 end
 

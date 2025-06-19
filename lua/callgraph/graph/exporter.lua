@@ -227,7 +227,7 @@ function DotExporter:export_to_dot(root_node, opts)
     local file_groups = {}
     local visited_collect = {}
     local is_virtual_root = self:_is_virtual_root(root_node)
-    
+
     if is_virtual_root then
         -- Skip the virtual root node, but collect its children
         visited_collect[self:_generate_node_id(root_node)] = true
@@ -258,7 +258,7 @@ function DotExporter:export_to_dot(root_node, opts)
 
             local label = self:_escape_string(node.data.name or "unknown") -- Only show name in subgraph
             local is_root = node == root_node
-            
+
             -- If root is virtual, treat its direct children as roots
             if is_virtual_root and root_node.children then
                 for _, child in ipairs(root_node.children) do
@@ -268,7 +268,7 @@ function DotExporter:export_to_dot(root_node, opts)
                     end
                 end
             end
-            
+
             local style = self:_get_node_style(node, node:is_recursive(), is_root)
 
             table.insert(dot_lines, string.format('    %s [label="%s", %s];', node_id, label, style))
@@ -317,8 +317,10 @@ local exporter = DotExporter.new()
 local M = {}
 
 ---@param root_node Node The root node of the tree
----@param opts callgraph.Opts.Export Options for exporting
+---@param opts callgraph.Opts.Export? Options for exporting
 function M.export(root_node, opts)
+    local config = require("callgraph.config")
+    opts = config.merge_opts(opts, require("callgraph").opts.export)
     return exporter:export_to_file(root_node, opts)
 end
 
