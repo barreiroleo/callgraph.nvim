@@ -28,17 +28,17 @@ jobs:
           version: latest
           args: --check lua/ tests/ -f ./stylua.toml
 
-  luacheck:
-    name: Static analysis (Luacheck)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Run Luacheck
-        uses: lunarmodules/luacheck@v1
-        with:
-          args: lua/ tests/ --codes --quiet --exclude-files "**/_meta**"
+  # luacheck:
+  #   name: Static analysis (Luacheck)
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+  #
+  #     - name: Run Luacheck
+  #       uses: lunarmodules/luacheck@v1
+  #       with:
+  #         args: lua/ tests/ --codes --quiet --exclude-files "**/_meta**"
 
   selene:
     name: Lint check (Selene)

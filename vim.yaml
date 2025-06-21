@@ -1,6 +1,8 @@
 ---
 # Actually 5.1. using 5.2 because LuaJIT and the goto ::continue::
-base: lua52
+base: lua51
+lua_versions:
+  - luajit
 
 globals:
   vim:

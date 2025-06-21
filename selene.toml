@@ -1,4 +1,4 @@
-std="vim"
+std = "vim"
 
 [rules]
 # This is for cases like `string.format`, `package.config`, etc.
