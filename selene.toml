@@ -1,0 +1,6 @@
+# Actually 5.1. using 5.2 because LuaJIT and the goto ::continue::
+std="lua52+vim"
+
+[rules]
+# This is for cases like `string.format`, `package.config`, etc.
+incorrect_standard_library_use = "allow"

@@ -30,7 +30,9 @@ local function on_finish(root, dev)
         dev.on_finish(root)
     end
     if dev.profiling then
-        Snacks.profiler.stop({ group = "name", sort = "time", structure = true, filter = { ref_plugin = "callgraph.nvim" } })
+        Snacks.profiler.stop(
+            { group = "name", sort = "time", structure = true, filter = { ref_plugin = "callgraph.nvim" } }
+        )
     end
     if dev.dump_tree then
         vim.print(root:dump_subtree())

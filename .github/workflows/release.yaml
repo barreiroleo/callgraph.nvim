@@ -1,3 +1,5 @@
+# Credits to mason.nvim
+
 name: Release
 
 on:
@@ -10,42 +12,29 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write # Required for creating releases
-  issues: write   # Required for semantic-release to comment on issues
-  pull-requests: write # Required for semantic-release to comment on PRs
+  contents: write
+  pull-requests: write
 
 jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request'
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: google-github-actions/release-please-action@v3
+        id: release
         with:
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PAT }}
+          release-type: simple
+          package-name: callgraph.nvim
+          extra-files: |
+            README.md
+            lua/callgraph/version.lua
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+
+      - uses: rickstaa/action-create-tag@v1
+        if: ${{ steps.release.outputs.release_created }}
         with:
-          node-version: 20
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Verify semantic-release configuration
-        run: |
-          if [ ! -f .releaserc ] && [ ! -f .releaserc.json ] && [ ! -f .releaserc.js ] && ! grep -q '"release"' package.json; then
-            echo "❌ No semantic-release configuration found"
-            exit 1
-          else
-            echo "✅ Semantic-release configuration found"
-          fi
-
-      - name: Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx semantic-release --dry-run
-        # run: npx semantic-release
+          tag: stable
+          message: "Current stable release: ${{ steps.release.outputs.tag_name }}"
+          force_push_tag: true
