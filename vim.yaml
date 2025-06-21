@@ -1,4 +1,7 @@
 ---
+# Actually 5.1. using 5.2 because LuaJIT and the goto ::continue::
+base: lua52
+
 globals:
   vim:
     any: true

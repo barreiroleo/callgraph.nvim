@@ -15,7 +15,6 @@ local function create_data_key(data)
     end
 end
 
-
 ---@class Node<T>: { data: T }
 ---@field parent Node?
 ---@field children Node[]
@@ -96,7 +95,7 @@ function Node:dump_subtree()
             table.insert(result.children, {
                 data = child.data,
                 is_recursive = true,
-                children = {} -- Don't traverse recursive children
+                children = {}, -- Don't traverse recursive children
             })
         else
             table.insert(result.children, child:dump_subtree())

@@ -1,5 +1,4 @@
-# Actually 5.1. using 5.2 because LuaJIT and the goto ::continue::
-std="lua52+vim"
+std="vim"
 
 [rules]
 # This is for cases like `string.format`, `package.config`, etc.

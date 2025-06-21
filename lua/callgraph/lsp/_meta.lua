@@ -1,5 +1,5 @@
 ---@meta
-error('Cannot require a meta file')
+error("Cannot require a meta file")
 
 ---@class callgraph.Opts
 ---@field run callgraph.Opts.Run?
@@ -19,7 +19,6 @@ error('Cannot require a meta file')
 ---@field file_path string Path to write the DOT file
 ---@field graph_name string Name for the graph
 ---@field direction "TB"|"LR"|"BT"|"RL" Direction
-
 
 ---@class callgraph.Opts.Dev
 ---@field profiling boolean? Enable profiling

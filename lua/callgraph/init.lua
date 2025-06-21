@@ -24,7 +24,11 @@ function M.add_location()
     end
 
     local params = vim.lsp.util.make_position_params(0, client.offset_encoding)
-    if vim.tbl_contains(loc_list, function(v) return vim.deep_equal(v, params) end, { predicate = true }) then
+    local is_duplicated = vim.tbl_contains(loc_list, function(v)
+        return vim.deep_equal(v, params)
+    end, { predicate = true })
+
+    if is_duplicated then
         vim.notify("Location already exists in the list", vim.log.levels.INFO)
         return nil
     end

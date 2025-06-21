@@ -24,7 +24,7 @@ M.defs = {
         on_finish = nil,
         dump_tree = false,
         dump_locations = false,
-    }
+    },
 }
 
 ---@generic T: table

@@ -23,7 +23,6 @@ local function filter_location(uri, filters, invert_filter)
     return invert_filter
 end
 
-
 ---@param ctx callgraph.Request.Ctx
 ---@param uri string
 ---@return boolean value true if the child should be excluded, false otherwise
@@ -34,8 +33,10 @@ local function should_exclude_child(ctx, uri)
     end
 
     local filter = ctx.opts.filter_location
-    if type(filter) == "function" and filter(uri) or
-        type(filter) == "table" and filter_location(uri, filter, ctx.opts.invert_filter) then
+    if
+        type(filter) == "function" and filter(uri)
+        or type(filter) == "table" and filter_location(uri, filter, ctx.opts.invert_filter)
+    then
         return true
     end
 

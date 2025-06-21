@@ -1,8 +1,8 @@
 local Node = require("callgraph.tree.node")
 
-local lsp_utils = require("callgraph.lsp.utils")
 local handlers = require("callgraph.lsp.handlers")
 local listener = require("callgraph.lsp.listener")
+local lsp_utils = require("callgraph.lsp.utils")
 
 ---@param loc_params lsp.TextDocumentPositionParams[]
 ---@param opts callgraph.Opts.Run
@@ -30,9 +30,12 @@ local function on_finish(root, dev)
         dev.on_finish(root)
     end
     if dev.profiling then
-        Snacks.profiler.stop(
-            { group = "name", sort = "time", structure = true, filter = { ref_plugin = "callgraph.nvim" } }
-        )
+        Snacks.profiler.stop({
+            group = "name",
+            sort = "time",
+            structure = true,
+            filter = { ref_plugin = "callgraph.nvim" },
+        })
     end
     if dev.dump_tree then
         vim.print(root:dump_subtree())
@@ -40,7 +43,6 @@ local function on_finish(root, dev)
 
     require("callgraph.graph.exporter").export(root)
 end
-
 
 local N = {}
 
@@ -65,11 +67,14 @@ end
 function N.request_outgoingCalls(client, request, callback)
     assert(request.item, "callHierarchy/outgoingCalls requires CallHierarchyItem")
 
-    local success, req_id = client:request('callHierarchy/outgoingCalls', { item = request.item },
+    local success, req_id = client:request(
+        "callHierarchy/outgoingCalls",
+        { item = request.item },
         function(err, res, ctx, conf)
             local response = { err = err, result = res, context = ctx, config = conf }
             handlers.handler_outgoingCalls(response, request.ctx, callback)
-        end)
+        end
+    )
 
     if not success or not req_id then
         vim.notify("Failed to request outgoing calls", vim.log.levels.ERROR)
@@ -84,11 +89,14 @@ end
 function N.request_incomingCalls(client, request, callback)
     assert(request.item, "callHierarchy/incomingCalls requires CallHierarchyItem")
 
-    local success, req_id = client:request('callHierarchy/incomingCalls', { item = request.item },
+    local success, req_id = client:request(
+        "callHierarchy/incomingCalls",
+        { item = request.item },
         function(err, res, ctx, conf)
             local response = { err = err, result = res, context = ctx, config = conf }
             handlers.handler_incomingCalls(response, request.ctx, callback)
-        end)
+        end
+    )
 
     if not success or not req_id then
         vim.notify("Failed to request incoming calls", vim.log.levels.ERROR)
@@ -103,11 +111,14 @@ end
 function N.request_prepareCallHierarchy(client, request, callback)
     assert(request.params, "textDocument/prepareCallHierarchy requires TextDocumentPositionParams")
 
-    local success, req_id = client:request("textDocument/prepareCallHierarchy", request.params,
+    local success, req_id = client:request(
+        "textDocument/prepareCallHierarchy",
+        request.params,
         function(err, res, ctx, conf)
             local response = { err = err, result = res, context = ctx, config = conf }
             handlers.handler_prepareCallHierarchy(response, request.ctx, callback)
-        end)
+        end
+    )
 
     if not success or not req_id then
         vim.notify("Failed to request call hierarchy", vim.log.levels.ERROR)
@@ -141,7 +152,7 @@ function M.run(loc_params, opts, dev)
             ctx = {
                 root = root,
                 opts = opts,
-            }
+            },
         }
 
         local callback = N.select_request(request.ctx.opts.direction)

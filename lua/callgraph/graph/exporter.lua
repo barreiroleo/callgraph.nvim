@@ -37,8 +37,8 @@ end
 ---@return string
 function DotExporter:_escape_string(str)
     local result = str:gsub('"', '\\"')
-    result = result:gsub('\n', '\\n')
-    result = result:gsub('\r', '\\r')
+    result = result:gsub("\n", "\\n")
+    result = result:gsub("\r", "\\r")
     return result
 end
 
@@ -75,19 +75,19 @@ function DotExporter:_get_node_style(node, is_recursive, is_root)
 
     -- Special styling for root node
     if is_root then
-        style = 'shape=box, style=filled, fillcolor=lightcoral'
+        style = "shape=box, style=filled, fillcolor=lightcoral"
     -- Different colors/shapes for different symbol kinds
-    elseif kind == 6 then      -- Method/Function
-        style = 'shape=box, style=filled, fillcolor=lightblue'
+    elseif kind == 6 then -- Method/Function
+        style = "shape=box, style=filled, fillcolor=lightblue"
     elseif kind == 12 then -- Function
-        style = 'shape=ellipse, style=filled, fillcolor=lightgreen'
+        style = "shape=ellipse, style=filled, fillcolor=lightgreen"
     else
-        style = 'shape=box, style=filled, fillcolor=lightgray'
+        style = "shape=box, style=filled, fillcolor=lightgray"
     end
 
     -- Mark recursive nodes with different border (unless it's the root)
     if is_recursive and not is_root then
-        style = style .. ', color=red, penwidth=2'
+        style = style .. ", color=red, penwidth=2"
     end
 
     return style
@@ -142,7 +142,7 @@ function DotExporter:_collect_nodes_by_file(node, file_groups, visited, skip_cur
         end
         table.insert(file_groups[file_location], {
             node = node,
-            node_id = node_id
+            node_id = node_id,
         })
     end
 
@@ -190,10 +190,10 @@ function DotExporter:_export_edges(node, dot_lines, visited, skip_current)
                 local call_type = child_data.call_type
                 if call_type == "incoming" then
                     -- For incoming calls: child calls parent, so arrow goes child -> parent
-                    table.insert(dot_lines, string.format('  %s -> %s;', child_id, node_id))
+                    table.insert(dot_lines, string.format("  %s -> %s;", child_id, node_id))
                 else
                     -- For outgoing calls (or unspecified): parent calls child, so arrow goes parent -> child
-                    table.insert(dot_lines, string.format('  %s -> %s;', node_id, child_id))
+                    table.insert(dot_lines, string.format("  %s -> %s;", node_id, child_id))
                 end
             end
 
@@ -217,11 +217,11 @@ function DotExporter:export_to_dot(root_node, opts)
 
     -- Start digraph
     table.insert(dot_lines, string.format('digraph "%s" {', opts.graph_name))
-    table.insert(dot_lines, '  rankdir=' .. opts.direction .. ';')
+    table.insert(dot_lines, "  rankdir=" .. opts.direction .. ";")
     table.insert(dot_lines, '  node [fontname="Arial", fontsize=10];')
     table.insert(dot_lines, '  edge [fontname="Arial", fontsize=8];')
-    table.insert(dot_lines, '  compound=true;') -- Allow edges between subgraphs
-    table.insert(dot_lines, '')
+    table.insert(dot_lines, "  compound=true;") -- Allow edges between subgraphs
+    table.insert(dot_lines, "")
 
     -- Collect all nodes grouped by file location
     local file_groups = {}
@@ -244,12 +244,12 @@ function DotExporter:export_to_dot(root_node, opts)
     for file_location, nodes in pairs(file_groups) do
         local subgraph_name = self:_generate_subgraph_name(file_location)
 
-        table.insert(dot_lines, string.format('  subgraph %s {', subgraph_name))
+        table.insert(dot_lines, string.format("  subgraph %s {", subgraph_name))
         table.insert(dot_lines, string.format('    label="%s";', self:_escape_string(file_location)))
-        table.insert(dot_lines, '    style=filled;')
-        table.insert(dot_lines, '    fillcolor=lightgray;')
-        table.insert(dot_lines, '    color=black;')
-        table.insert(dot_lines, '')
+        table.insert(dot_lines, "    style=filled;")
+        table.insert(dot_lines, "    fillcolor=lightgray;")
+        table.insert(dot_lines, "    color=black;")
+        table.insert(dot_lines, "")
 
         -- Add nodes for this file
         for _, node_info in ipairs(nodes) do
@@ -274,8 +274,8 @@ function DotExporter:export_to_dot(root_node, opts)
             table.insert(dot_lines, string.format('    %s [label="%s", %s];', node_id, label, style))
         end
 
-        table.insert(dot_lines, '  }')
-        table.insert(dot_lines, '')
+        table.insert(dot_lines, "  }")
+        table.insert(dot_lines, "")
     end
 
     -- Add edges between nodes
@@ -288,9 +288,9 @@ function DotExporter:export_to_dot(root_node, opts)
     end
 
     -- End digraph
-    table.insert(dot_lines, '}')
+    table.insert(dot_lines, "}")
 
-    return table.concat(dot_lines, '\n')
+    return table.concat(dot_lines, "\n")
 end
 
 ---Export to DOT file
@@ -300,7 +300,7 @@ end
 function DotExporter:export_to_file(root_node, opts)
     local dot_content = self:export_to_dot(root_node, opts)
 
-    local file, err = io.open(opts.file_path, 'w')
+    local file, err = io.open(opts.file_path, "w")
     vim.notify("Exporting graph to " .. opts.file_path, vim.log.levels.INFO)
     if not file then
         return false, "Failed to open file: " .. (err or "unknown error")

@@ -6,47 +6,55 @@ local Node = require("callgraph.tree.node")
 
 ---@type Node<Data>
 local expected_root = {
-    children = { {
-        children = { {
+    children = {
+        {
+            children = {
+                {
+                    children = {},
+                    data = {
+                        name = "Child 2",
+                        value = 2,
+                    },
+                    is_recursive = false,
+                },
+            },
+            data = {
+                name = "Child 1",
+                value = 1,
+            },
+            is_recursive = false,
+        },
+        {
             children = {},
             data = {
-                name = "Child 2",
-                value = 2
+                name = "Child 3",
+                value = 3,
             },
-            is_recursive = false
-        } },
-        data = {
-            name = "Child 1",
-            value = 1
+            is_recursive = false,
         },
-        is_recursive = false
-    }, {
-        children = {},
-        data = {
-            name = "Child 3",
-            value = 3
-        },
-        is_recursive = false
-    }, {
-        children = { {
-            children = {},
+        {
+            children = {
+                {
+                    children = {},
+                    data = {
+                        name = "Child 4",
+                        value = 4,
+                    },
+                    is_recursive = true,
+                },
+            },
             data = {
                 name = "Child 4",
-                value = 4
+                value = 4,
             },
-            is_recursive = true
-        } },
-        data = {
-            name = "Child 4",
-            value = 4
+            is_recursive = false,
         },
-        is_recursive = false
-    } },
+    },
     data = {
         name = "Root",
-        value = 0
+        value = 0,
     },
-    is_recursive = false
+    is_recursive = false,
 }
 
 --- Expected tree
@@ -99,7 +107,6 @@ end
 local function test_is_leaf(root)
     return root:is_leaf()
 end
-
 
 local root = create_tree()
 assert(test_dump(root, true), "Expected tree dump does not match actual tree dump")

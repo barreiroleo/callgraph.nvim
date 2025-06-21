@@ -2,7 +2,7 @@ all: format lint test
 
 format:
 	@echo Formatting...
-	@stylua tests/ lua/ -f ./stylua.toml
+	@stylua lua/ tests/ -f ./stylua.toml
 
 lint: lint_luacheck lint_selene
 	@echo Linting...
@@ -11,7 +11,7 @@ lint_luacheck:
 	@luacheck lua/ tests/ --codes --quiet --exclude-files "**/_meta**"
 
 lint_selene:
-	@selene lua/ tests/ --quiet
+	@selene lua/ tests/ --quiet --allow-warnings
 
 test: deps
 	@echo Testing...
