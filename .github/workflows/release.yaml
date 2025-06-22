@@ -6,35 +6,29 @@ on:
   push:
     tags:
       - 'v*'
-  pull_request:
-    branches:
-      - master
   workflow_dispatch:
-
-permissions:
-  contents: write
-  pull-requests: write
 
 jobs:
   release:
-    name: Release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
     steps:
-      - uses: google-github-actions/release-please-action@v3
-        id: release
+      - uses: actions/checkout@v4
+
+      # Generate release notes using release-please
+      - id: notes
+        uses: googleapis/release-please-action@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           release-type: simple
-          package-name: callgraph.nvim
-          extra-files: |
-            README.md
-            lua/callgraph/version.lua
+          skip-github-release: true
 
-      - uses: actions/checkout@v4
-
-      - uses: rickstaa/action-create-tag@v1
-        if: ${{ steps.release.outputs.release_created }}
+      # Create the GitHub Release using the release note as body
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
         with:
-          tag: stable
-          message: "Current stable release: ${{ steps.release.outputs.tag_name }}"
-          force_push_tag: true
+          body: ${{ steps.notes.outputs.release_notes }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
