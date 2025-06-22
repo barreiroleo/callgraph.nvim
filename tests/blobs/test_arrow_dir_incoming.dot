@@ -1,0 +1,20 @@
+digraph "TestIncoming" {
+  rankdir=LR;
+  node [fontname="Arial", fontsize=10];
+  edge [fontname="Arial", fontsize=8];
+  compound=true;
+
+  subgraph cluster_test_incoming_dot__should_show_A____B____C__1 {
+    label="test_incoming.dot (should show A <- B <- C)";
+    style=filled;
+    fillcolor=lightgray;
+    color=black;
+
+    node1 [label="A", shape=box, style=filled, fillcolor=lightcoral];
+    node2 [label="B", shape=ellipse, style=filled, fillcolor=lightgreen];
+    node3 [label="C", shape=ellipse, style=filled, fillcolor=lightgreen];
+  }
+
+  node2 -> node1;
+  node3 -> node2;
+}

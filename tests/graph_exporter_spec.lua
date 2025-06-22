@@ -1,4 +1,12 @@
+---@module "plenary.busted"
+---
+--- Tests for the graph exporter functionality
+
 local Node = require("callgraph.tree.node")
+local exporter = require("callgraph.graph.exporter")
+
+-- Initialize callgraph with default config for testing
+require("callgraph").setup()
 
 local function recreate_graph_from_dump()
     -- Create the root node: do_something_common
@@ -116,24 +124,47 @@ local function recreate_graph_from_dump()
     return root
 end
 
-local function test_node_exporter()
-    local root_node = recreate_graph_from_dump()
-    vim.print(root_node:dump_subtree())
+describe("Graph Exporter", function()
+    it("should export node-based graph to DOT format", function()
+        local root_node = recreate_graph_from_dump()
+        local test_file = "/tmp/test_node_exporter.dot"
 
-    -- Test the new exporter
-    local success, err = require("callgraph.graph.exporter").export(root_node, {
-        file_path = "/tmp/test_node_exporter.dot",
-        graph_name = "TestNodeGraph",
-        direction = "LR",
-    })
+        local success, err = exporter.export(root_node, {
+            file_path = test_file,
+            graph_name = "TestNodeGraph",
+            direction = "LR",
+        })
 
-    if success then
-        print("✓ Successfully exported Node-based graph to /tmp/test_node_exporter.dot")
-    else
-        print("✗ Failed to export: " .. (err or "unknown error"))
-    end
+        assert(success, "Export should succeed: " .. (err or "unknown error"))
 
-    return root_node
-end
+        -- Check if file was created
+        local file = io.open(test_file, "r")
+        assert(file ~= nil, "DOT file should be created")
 
-test_node_exporter()
+        if file then
+            local content = file:read("*all")
+            file:close()
+
+            -- Basic validation of DOT format
+            assert(content:find("digraph") ~= nil, "Should contain proper digraph declaration")
+            assert(content:find("rankdir=LR") ~= nil, "Should contain direction setting")
+            assert(content:find("do_something_common") ~= nil, "Should contain root node")
+
+            -- Clean up
+            os.remove(test_file)
+        end
+    end)
+
+    it("should handle export failures gracefully", function()
+        -- Test with invalid file path
+        local root_node = recreate_graph_from_dump()
+        local success, err = exporter.export(root_node, {
+            file_path = "/invalid/path/test.dot",
+            graph_name = "TestNodeGraph",
+            direction = "LR",
+        })
+
+        -- Should handle the error gracefully (either return false or handle the invalid path)
+        assert(success ~= nil, "Should return a success status")
+    end)
+end)

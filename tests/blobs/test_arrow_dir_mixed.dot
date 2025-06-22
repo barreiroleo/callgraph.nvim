@@ -1,0 +1,20 @@
+digraph "TestMixed" {
+  rankdir=LR;
+  node [fontname="Arial", fontsize=10];
+  edge [fontname="Arial", fontsize=8];
+  compound=true;
+
+  subgraph cluster_test_mixed_dot__should_show_A____B_and_C____A__1 {
+    label="test_mixed.dot (should show A -> B and C -> A)";
+    style=filled;
+    fillcolor=lightgray;
+    color=black;
+
+    node1 [label="A", shape=box, style=filled, fillcolor=lightcoral];
+    node2 [label="B", shape=ellipse, style=filled, fillcolor=lightgreen];
+    node3 [label="C", shape=ellipse, style=filled, fillcolor=lightgreen];
+  }
+
+  node1 -> node2;
+  node3 -> node1;
+}

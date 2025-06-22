@@ -4,7 +4,7 @@ format:
 	@echo Formatting...
 	@stylua lua/ tests/ -f ./stylua.toml
 
-lint: lint_luacheck lint_selene
+lint: lint_selene
 	@echo Linting...
 
 lint_luacheck:

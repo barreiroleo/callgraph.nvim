@@ -81,6 +81,10 @@ function Node:is_recursive()
     return self._is_recursive == true
 end
 
+function Node:get_depth()
+    return self._depth
+end
+
 ---@return table subtree tree dump
 function Node:dump_subtree()
     local result = {

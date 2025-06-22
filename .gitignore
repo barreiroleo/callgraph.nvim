@@ -1,4 +1,3 @@
 deps/
-tests/blobs/
 tests/**/.cache/
 tests/**/build/
