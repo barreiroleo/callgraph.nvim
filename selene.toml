@@ -1,0 +1,5 @@
+std = "vim"
+
+[rules]
+# This is for cases like `string.format`, `package.config`, etc.
+incorrect_standard_library_use = "allow"

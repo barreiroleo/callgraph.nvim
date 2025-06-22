@@ -1,21 +1,10 @@
 ---@meta
-error('Cannot require a meta file')
+error("Cannot require a meta file")
 
 ---@class callgraph.Opts
 ---@field run callgraph.Opts.Run?
 ---@field export callgraph.Opts.Export?
 ---@field _dev callgraph.Opts.Dev?
-
----@class callgraph.Opts.Dev
----@field profiling boolean? Enable profiling
----@field log_level vim.log.levels? Log level for debugging
----@field on_start fun(opts: callgraph.Opts.Run)? Called when the callgraph request is started
----@field on_finish fun(root: Node)? Called when the callgraph request is finished
-
----@class callgraph.Opts.Export
----@field file_path string Path to write the DOT file
----@field graph_name string Name for the graph
----@field direction "TB"|"LR"|"BT"|"RL" Direction
 
 ---@alias callgraph.Opts.Run.Dir "in" | "out" | "mix"
 ---@class callgraph.Opts.Run
@@ -25,8 +14,19 @@ error('Cannot require a meta file')
 ---@field filter_location string[]? | fun(uri: string)?: boolean
 ---@field invert_filter boolean? True only include the results in filter_location
 ---@field root_location string?
----@field on_start fun(opts: callgraph.Opts.Run)?
----@field on_finish fun(root: Node)?
+
+---@class callgraph.Opts.Export
+---@field file_path string Path to write the DOT file
+---@field graph_name string Name for the graph
+---@field direction "TB"|"LR"|"BT"|"RL" Direction
+
+---@class callgraph.Opts.Dev
+---@field profiling boolean? Enable profiling
+---@field log_level vim.log.levels? Log level for debugging
+---@field on_start fun(opts: callgraph.Opts.Run)? Called when the callgraph is started
+---@field on_finish fun(root: Node)? Called when the callgraph is finished
+---@field dump_tree boolean? Dump the tree structure when finished
+---@field dump_locations boolean? Dump the locations of target items on start
 
 ---@class callgraph.Entry
 ---@field kind lsp.SymbolKind

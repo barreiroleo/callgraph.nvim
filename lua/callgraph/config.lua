@@ -19,10 +19,12 @@ M.defs = {
 
     _dev = {
         profiling = false,
-        log_level = vim.log.levels.TRACE,
+        log_level = vim.log.levels.INFO,
         on_start = nil,
         on_finish = nil,
-    }
+        dump_tree = false,
+        dump_locations = false,
+    },
 }
 
 ---@generic T: table

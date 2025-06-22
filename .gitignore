@@ -1,3 +1,4 @@
-test/**/.cache/
-test/**/build/
-test/**/samples/
+deps/
+tests/blobs/
+tests/**/.cache/
+tests/**/build/

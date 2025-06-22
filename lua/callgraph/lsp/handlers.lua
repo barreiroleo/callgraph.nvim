@@ -23,7 +23,6 @@ local function filter_location(uri, filters, invert_filter)
     return invert_filter
 end
 
-
 ---@param ctx callgraph.Request.Ctx
 ---@param uri string
 ---@return boolean value true if the child should be excluded, false otherwise
@@ -34,8 +33,10 @@ local function should_exclude_child(ctx, uri)
     end
 
     local filter = ctx.opts.filter_location
-    if type(filter) == "function" and filter(uri) or
-        type(filter) == "table" and filter_location(uri, filter, ctx.opts.invert_filter) then
+    if
+        type(filter) == "function" and filter(uri)
+        or type(filter) == "table" and filter_location(uri, filter, ctx.opts.invert_filter)
+    then
         return true
     end
 
@@ -64,23 +65,19 @@ function M.handler_outgoingCalls(response, ctx, cb)
 
     --- Process all the outgoing items in the results and request the ougoing calls for they too
     for _, call in ipairs(result) do
-        if should_exclude_child(ctx, call.to.uri) then
-            goto continue
+        if not should_exclude_child(ctx, call.to.uri) then
+            local node = Node.new({
+                kind = call.to.kind,
+                name = call.to.name,
+                location = short_uri(ctx.opts.root_location, call.to.uri),
+                call_type = "outgoing",
+            }, ctx.root)
+
+            ---Request outgoing calls for call
+            ---@type callgraph.Request
+            local request = { item = call.to, ctx = { root = node, opts = ctx.opts } }
+            cb(client, request, cb)
         end
-
-        local node = Node.new({
-            kind = call.to.kind,
-            name = call.to.name,
-            location = short_uri(ctx.opts.root_location, call.to.uri),
-            call_type = "outgoing",
-        }, ctx.root)
-
-        ---Request outgoing calls for call
-        ---@type callgraph.Request
-        local request = { item = call.to, ctx = { root = node, opts = ctx.opts } }
-        cb(client, request, cb)
-
-        ::continue::
     end
 end
 
@@ -95,23 +92,19 @@ function M.handler_incomingCalls(response, ctx, cb)
 
     --- Process all the incoming items in the results and request the incoming calls for they too
     for _, call in ipairs(result) do
-        if should_exclude_child(ctx, call.from.uri) then
-            goto continue
+        if not should_exclude_child(ctx, call.from.uri) then
+            local node = Node.new({
+                kind = call.from.kind,
+                name = call.from.name,
+                location = short_uri(ctx.opts.root_location, call.from.uri),
+                call_type = "incoming",
+            }, ctx.root)
+
+            ---Request incoming calls for call
+            ---@type callgraph.Request
+            local request = { item = call.from, ctx = { root = node, opts = ctx.opts } }
+            cb(client, request, cb)
         end
-
-        local node = Node.new({
-            kind = call.from.kind,
-            name = call.from.name,
-            location = short_uri(ctx.opts.root_location, call.from.uri),
-            call_type = "incoming",
-        }, ctx.root)
-
-        ---Request incoming calls for call
-        ---@type callgraph.Request
-        local request = { item = call.from, ctx = { root = node, opts = ctx.opts } }
-        cb(client, request, cb)
-
-        ::continue::
     end
 end
 

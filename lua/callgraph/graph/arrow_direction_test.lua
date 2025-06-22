@@ -12,7 +12,7 @@ local function test_outgoing()
     local success_out = exporter.export(root_out, {
         file_path = "/tmp/test_outgoing.dot",
         graph_name = "TestOutgoing",
-        direction = "LR"
+        direction = "LR",
     })
     vim.ui.open("/tmp/test_outgoing.dot")
 end
@@ -28,7 +28,7 @@ local function test_incoming()
     local success_in = exporter.export(root_in, {
         file_path = "/tmp/test_incoming.dot",
         graph_name = "TestIncoming",
-        direction = "LR"
+        direction = "LR",
     })
     vim.ui.open("/tmp/test_incoming.dot")
 end
@@ -44,7 +44,7 @@ local function test_mix()
     local success_mix = exporter.export(root_mix, {
         file_path = "/tmp/test_mixed.dot",
         graph_name = "TestMixed",
-        direction = "LR"
+        direction = "LR",
     })
     vim.ui.open("/tmp/test_mixed.dot")
 end

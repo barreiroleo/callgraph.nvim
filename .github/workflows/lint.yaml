@@ -1,0 +1,55 @@
+name: Format and lint
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  stylua:
+    name: Format check (StyLua)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check Lua formatting
+        uses: JohnnyMorganz/stylua-action@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          version: latest
+          args: --check lua/ tests/ -f ./stylua.toml
+
+  # luacheck:
+  #   name: Static analysis (Luacheck)
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+  #
+  #     - name: Run Luacheck
+  #       uses: lunarmodules/luacheck@v1
+  #       with:
+  #         args: lua/ tests/ --codes --quiet --exclude-files "**/_meta**"
+
+  selene:
+    name: Lint check (Selene)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Selene linter
+        uses: NTBBloodbath/selene-action@v1.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: lua/ tests/ --quiet --allow-warnings
+          version: 0.28.0
